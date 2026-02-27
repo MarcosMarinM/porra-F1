@@ -1,0 +1,11 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+usuarios.sqlite
+service-account.json
+.httr-oauth
+f1-service-account.json
+
+# Variables de Entorno
+.Renviron
