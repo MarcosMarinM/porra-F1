@@ -424,6 +424,42 @@ server <- function(input, output, session) {
       showNotification("Error: Pilotos duplicados", type = "error")
       return()
     }
+
+    # Regla de similitud 75%: comparar con porras de otros usuarios
+    db_check <- read_sheet(SHEET_ID, col_types = "c")
+    otras <- db_check %>%
+      filter(gp == input$gp, sesion == input$sesion, usuario != res_auth$user)
+    if (nrow(otras) > 0) {
+      es_carrera <- input$sesion == "Carrera"
+      max_coincidencias <- if (es_carrera) 5 else 3
+      for (k in 1:nrow(otras)) {
+        coincidencias <- sum(c(
+          top5[1] != "" && !is.na(otras$p1[k]) && top5[1] == otras$p1[k],
+          top5[2] != "" && !is.na(otras$p2[k]) && top5[2] == otras$p2[k],
+          top5[3] != "" && !is.na(otras$p3[k]) && top5[3] == otras$p3[k],
+          top5[4] != "" && !is.na(otras$p4[k]) && top5[4] == otras$p4[k],
+          top5[5] != "" && !is.na(otras$p5[k]) && top5[5] == otras$p5[k]
+        ))
+        if (es_carrera) {
+          if (!is.null(input$vr) && input$vr != "" && !is.na(otras$vuelta_rapida[k]) && input$vr == otras$vuelta_rapida[k]) coincidencias <- coincidencias + 1
+          if (!is.null(input$maz) && input$maz != "" && !is.na(otras$mazepin[k]) && input$maz == otras$mazepin[k]) coincidencias <- coincidencias + 1
+        }
+        if (coincidencias > max_coincidencias) {
+          showNotification(
+            paste0(
+              "\u26A0\uFE0F PORRA BLOQUEADA: Tu porra tiene ", coincidencias,
+              " coincidencias con la de ", toupper(otras$usuario[k]),
+              " (máximo permitido: ", max_coincidencias, "). ",
+              "El reglamento prohíbe un 75% o más de similitud."
+            ),
+            type = "error",
+            duration = NULL
+          )
+          return()
+        }
+      }
+    }
+
     new_row <- data.frame(
       usuario = res_auth$user, gp = input$gp, sesion = input$sesion,
       p1 = input$p1, p2 = input$p2, p3 = input$p3, p4 = input$p4, p5 = input$p5,
