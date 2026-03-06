@@ -3,25 +3,13 @@
 # VERSIÓN: 2026
 # ==============================================================================
 
-library(shiny)
-library(shinymanager)
-library(googlesheets4)
-library(dplyr)
-library(httr2)
-library(jsonlite)
-library(memoise)
-library(cachem)
-library(bslib)
-library(ggplot2)
-library(tidyr)
-library(plotly)
-
-# Los archivos en R/ se cargan automáticamente por Shiny:
-#   R/config.R  — variables de entorno, constantes, traducciones, colores
-#   R/api.R     — funciones de acceso a OpenF1
-#   R/scoring.R — lógica de puntuación
-#   R/ui.R      — definición de la interfaz (ui)
-#   R/server.R  — función server()
+# Los archivos en R/ se cargan automáticamente por Shiny (orden alfabético):
+#   R/00_packages.R — library() de todos los paquetes
+#   R/api.R         — funciones de acceso a OpenF1
+#   R/config.R      — variables de entorno, constantes, traducciones, colores
+#   R/scoring.R     — lógica de puntuación
+#   R/ui.R          — definición de la interfaz (ui)
+#   R/server.R      — función server()
 
 # ==============================================================================
 # LANZAR APP
