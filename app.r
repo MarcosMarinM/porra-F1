@@ -1,6 +1,6 @@
 # ==============================================================================
-# PROYECTO: LA CARRERA MÁS SURREALIST (F1 2025)
-# Versión: MASTER (Calendario Futuro + Privacidad + Estilos Pro)
+# PROYECTO: LA CARRERA MÁS SURREALIST 
+# VERSIÓN: 2026 
 # ==============================================================================
 
 library(shiny)
@@ -406,7 +406,7 @@ server <- function(input, output, session) {
     if (is.null(pil) || length(pil) == 0) {
       # Fallback a la parrilla de 2026
       # NOR, PIA, ANT, RUS, VER, HAD, LEC, HAM, ALB, SAI, LAW, LIN, ALO, STR, OCO, BEA, BOR, HÜL, GAS, COL, PER, BOT
-      pil <- c("NOR", "PIA", "ANT", "RUS", "VER", "HAD", "LEC", "HAM", "ALB", "SAI", "LAW", "LIN", "ALO", "STR", "OCO", "BEA", "BOR", "HÜL", "GAS", "COL", "PER", "BOT")
+      pil <- c("NOR", "PIA", "ANT", "RUS", "VER", "HAD", "LEC", "HAM", "ALB", "SAI", "LAW", "LIN", "ALO", "STR", "OCO", "BEA", "BOR", "HUL", "GAS", "COL", "PER", "BOT")
     }
     lapply(c("p1", "p2", "p3", "p4", "p5", "vr", "maz"), function(x) updateSelectInput(session, x, choices = sort(c("", pil))))
   })

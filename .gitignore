@@ -7,6 +7,7 @@ usuarios.sqlite
 service-account.json
 .httr-oauth
 f1-service-account.json
-
+/rsconnect
 # Variables de Entorno
 .Renviron
+.positai
