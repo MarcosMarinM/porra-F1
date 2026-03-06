@@ -8,6 +8,7 @@ service-account.json
 .httr-oauth
 f1-service-account.json
 /rsconnect
+translations.json
 # Variables de Entorno
 .Renviron
 .positai

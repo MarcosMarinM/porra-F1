@@ -1,0 +1,290 @@
+{
+  "_config": {
+    "default": "es",
+    "languages": {
+      "es":  { "label": "Castellano", "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Bandera_de_Castilla.svg/960px-Bandera_de_Castilla.svg.png" },
+      "ca":  { "label": "Català",     "flag": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Flag_of_Catalonia.svg/1280px-Flag_of_Catalonia.svg.png" },
+      "ext": { "label": "Estremeñu",  "flag": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Flag_of_Extremadura%2C_Spain.svg" }
+    }
+  },
+  "panel_title": {
+    "es": "Panel de control",
+    "ca": "Panell de control",
+    "ext": "Panel de control"
+  },
+  "code_label": {
+    "es": "Código:",
+    "ca": "Codi:",
+    "ext": "Códigu:"
+  },
+  "data_source": {
+    "es": "Datos oficiales de OpenF1.",
+    "ca": "Dades oficials d'OpenF1.",
+    "ext": "Datus oficialis d'OpenF1."
+  },
+  "tab_submit": {
+    "es": "📝 Enviar pronóstico",
+    "ca": "📝 Enviar pronòstic",
+    "ext": "📝 Envial pronósticu"
+  },
+  "tab_standings": {
+    "es": "🏆 Clasificación",
+    "ca": "🏆 Classificació",
+    "ext": "🏆 Clasificación"
+  },
+  "tab_rules": {
+    "es": "📜 Reglamento",
+    "ca": "📜 Reglament",
+    "ext": "📜 Reglamentu"
+  },
+  "new_porra": {
+    "es": "Nueva porra",
+    "ca": "Nova porra",
+    "ext": "Nueva porra"
+  },
+  "gp_label": {
+    "es": "Gran Premio",
+    "ca": "Gran Premi",
+    "ext": "Gran Premiu"
+  },
+  "session_label": {
+    "es": "Sesión",
+    "ca": "Sessió",
+    "ext": "Sesión"
+  },
+  "session_sprint_quali": {
+    "es": "Clasificación del esprint",
+    "ca": "Classificació de l'esprint",
+    "ext": "Clasificación del esprint"
+  },
+  "session_sprint": {
+    "es": "Esprint",
+    "ca": "Esprint",
+    "ext": "Esprint"
+  },
+  "session_quali": {
+    "es": "Clasificación",
+    "ca": "Classificació",
+    "ext": "Clasificación"
+  },
+  "session_race": {
+    "es": "Carrera",
+    "ca": "Cursa",
+    "ext": "Carrera"
+  },
+  "top5_label": {
+    "es": "top-5",
+    "ca": "top-5",
+    "ext": "top-5"
+  },
+  "pos_1": {
+    "es": "1º",
+    "ca": "1r",
+    "ext": "1u"
+  },
+  "pos_2": {
+    "es": "2º",
+    "ca": "2n",
+    "ext": "2u"
+  },
+  "pos_3": {
+    "es": "3º",
+    "ca": "3r",
+    "ext": "3u"
+  },
+  "pos_4": {
+    "es": "4º",
+    "ca": "4t",
+    "ext": "4u"
+  },
+  "pos_5": {
+    "es": "5º",
+    "ca": "5è",
+    "ext": "5u"
+  },
+  "extras_label": {
+    "es": "Extras",
+    "ca": "Extres",
+    "ext": "Estras"
+  },
+  "fast_lap": {
+    "es": "🚀 Vuelta rápida",
+    "ca": "🚀 Volta ràpida",
+    "ext": "🚀 Güelta rápida"
+  },
+  "mazepin_prize": {
+    "es": "🐢 Premio Mazepin",
+    "ca": "🐢 Premi Mazepin",
+    "ext": "🐢 Premiu Mazepin"
+  },
+  "submit_btn": {
+    "es": "ENVIAR PORRA",
+    "ca": "ENVIAR PORRA",
+    "ext": "ENVIAL PORRA"
+  },
+  "world_title": {
+    "es": "Mundial",
+    "ca": "Mundial",
+    "ext": "Mundial"
+  },
+  "analysis_title": {
+    "es": "Análisis GP",
+    "ca": "Anàlisi GP",
+    "ext": "Análisis GP"
+  },
+  "select_gp": {
+    "es": "Seleccionar Gran Premio:",
+    "ca": "Seleccionar Gran Premi:",
+    "ext": "Selecional Gran Premiu:"
+  },
+  "scope_me": {
+    "es": "Solo yo",
+    "ca": "Només jo",
+    "ext": "Solu yo"
+  },
+  "scope_all": {
+    "es": "Todos",
+    "ca": "Tothom",
+    "ext": "Tos"
+  },
+  "col_rank": {
+    "es": "#",
+    "ca": "#",
+    "ext": "#"
+  },
+  "col_pilot": {
+    "es": "PILOTO",
+    "ca": "PILOT",
+    "ext": "PILOTU"
+  },
+  "col_pts": {
+    "es": "PTS",
+    "ca": "PTS",
+    "ext": "PTS"
+  },
+  "no_data": {
+    "es": "Sin datos para este GP.",
+    "ca": "Sense dades per a aquest GP.",
+    "ext": "Sin datus pa esti GP."
+  },
+  "result_label": {
+    "es": "RESULTADO",
+    "ca": "RESULTAT",
+    "ext": "RESULTAU"
+  },
+  "porra_label": {
+    "es": "PORRA",
+    "ca": "PORRA",
+    "ext": "PORRA"
+  },
+  "waiting_results": {
+    "es": "Esperando resultados oficiales...",
+    "ca": "Esperant resultats oficials...",
+    "ext": "Esperandu resultaus oficialis..."
+  },
+  "pts_suffix": {
+    "es": "pts",
+    "ca": "pts",
+    "ext": "pts"
+  },
+  "scoring_title": {
+    "es": "Puntuación",
+    "ca": "Puntuació",
+    "ext": "Puntuación"
+  },
+  "scoring_intro": {
+    "es": "A continuación, se resume la obtención de puntos para cada una de las sesiones del fin de semana. Recuerda que para acertar la posición exacta, el piloto de tu porra debe coincidir exactamente con la posición final real. El semiacierto se da cuando tu piloto puntúa en el top-5, pero en un puesto distinto al que predijiste.",
+    "ca": "A continuació, es resumeix l'obtenció de punts per a cadascuna de les sessions del cap de setmana. Recorda que per encertar la posició exacta, el pilot de la teva porra ha de coincidir exactament amb la posició final real. L'encert parcial es dona quan el teu pilot puntua al top-5, però en una posició diferent a la que vas predir.",
+    "ext": "Aquí s'esplica cómu se dan los puntus en cá una de las sesionis del fin de semana. Alcuérdate de que pa acertal la posición esata, el pilotu de tu porra ebi coinciil esatamenti con la posición final real. El semiaciertu se da cuandu tu pilotu puntúa en el top-5, peru en un puestu distintu al que predijisti."
+  },
+  "rule_race": {
+    "es": " 6 puntos por posición exacta | 2 puntos por semiacierto | 3 puntos extra por acertar al Premio Mazepin | 1 punto extra por acertar la vuelta rápida",
+    "ca": " 6 punts per posició exacta | 2 punts per encert parcial | 3 punts extra per encertar el Premi Mazepin | 1 punt extra per encertar la volta ràpida",
+    "ext": " 6 puntus por posición esata | 2 puntus por semiaciertu | 3 puntus estra por acertal el Premiu Mazepin | 1 puntu estru por acertal la güelta rápida"
+  },
+  "rule_quali": {
+    "es": " 3 puntos por posición exacta | 1 punto por semiacierto",
+    "ca": " 3 punts per posició exacta | 1 punt per encert parcial",
+    "ext": " 3 puntus por posición esata | 1 puntu por semiaciertu"
+  },
+  "rule_sprint": {
+    "es": " 3 puntos por posición exacta | 1 punto por semiacierto",
+    "ca": " 3 punts per posició exacta | 1 punt per encert parcial",
+    "ext": " 3 puntus por posición esata | 1 puntu por semiaciertu"
+  },
+  "rule_sprint_quali": {
+    "es": " 1 punto por posición exacta (no hay puntos por semiacierto)",
+    "ca": " 1 punt per posició exacta (no hi ha punts per encert parcial)",
+    "ext": " 1 puntu por posición esata (no hay puntus por semiaciertu)"
+  },
+  "read_full_rules": {
+    "es": "Leer el reglamento oficial completo",
+    "ca": "Llegir el reglament oficial complet",
+    "ext": "Leel el reglamentu oficial completu"
+  },
+  "err_duplicate": {
+    "es": "Error: Pilotos duplicados",
+    "ca": "Error: Pilots duplicats",
+    "ext": "Error: Pilotus duplicaus"
+  },
+  "err_similarity_prefix": {
+    "es": "\u26a0\ufe0f PORRA BLOQUEADA: Tu porra tiene ",
+    "ca": "\u26a0\ufe0f PORRA BLOQUEJADA: La teva porra té ",
+    "ext": "\u26a0\ufe0f PORRA BLOQUEÁ: Tu porra tieni "
+  },
+  "err_similarity_mid": {
+    "es": " coincidencias con la de ",
+    "ca": " coincidències amb la de ",
+    "ext": " coincidencias con la de "
+  },
+  "err_similarity_max": {
+    "es": " (máximo permitido: ",
+    "ca": " (màxim permès: ",
+    "ext": " (másimu permitíu: "
+  },
+  "err_similarity_suffix": {
+    "es": "). El reglamento prohíbe un 75 % o más de similitud.",
+    "ca": "). El reglament prohibeix un 75 % o més de similitud.",
+    "ext": "). El reglamentu proíbi un 75 % o más de similitu."
+  },
+  "notify_updated": {
+    "es": "Porra actualizada",
+    "ca": "Porra actualitzada",
+    "ext": "Porra atualizá"
+  },
+  "notify_submitted": {
+    "es": "Porra enviada",
+    "ca": "Porra enviada",
+    "ext": "Porra enviá"
+  },
+  "calculating": {
+    "es": "Calculando...",
+    "ca": "Calculant...",
+    "ext": "Calculandu..."
+  },
+  "session_race_label": {
+    "es": "Carrera:",
+    "ca": "Cursa:",
+    "ext": "Carrera:"
+  },
+  "session_quali_label": {
+    "es": "Clasificación:",
+    "ca": "Classificació:",
+    "ext": "Clasificación:"
+  },
+  "session_sprint_label": {
+    "es": "Esprint:",
+    "ca": "Esprint:",
+    "ext": "Esprint:"
+  },
+  "session_sprint_quali_label": {
+    "es": "Clasificación del esprint:",
+    "ca": "Classificació de l'esprint:",
+    "ext": "Clasificación del esprint:"
+  },
+  "current_gp": {
+    "es": "🏎️ GP actual:",
+    "ca": "🏎️ GP actual:",
+    "ext": "🏎️ GP atual:"
+  }
+}
