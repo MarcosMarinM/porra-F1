@@ -13,7 +13,7 @@ server <- function(input, output, session) {
   # Helper: badge coloreado con el color del equipo (via CSS dinámico)
   team_badge <- function(driver, extra_class = "") {
     if (is.na(driver) || driver == "") return(span(class = "driver-badge", "-"))
-    driver_class <- if (extra_class == "") paste0("tc-", driver) else ""
+    driver_class <- paste0("tc-", driver)
     span(class = trimws(paste("driver-badge", driver_class, extra_class)), driver)
   }
 

@@ -36,8 +36,8 @@ ui <- fluidPage(
       .rank-1 { color: #FFD700; } .rank-2 { color: #C0C0C0; } .rank-3 { color: #CD7F32; }
       .points-badge { background-color: #e10600; color: white; padding: 3px 8px; border-radius: 10px; font-weight: bold; font-size: 0.9em; }
       .driver-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; background: #333; border-left: 3px solid #e10600; font-family: monospace; margin-right: 5px; font-weight: bold;}
-      .mazepin-badge { border-left: 3px solid #FFD700 !important; color: #FFD700 !important; }
-      .vr-badge { border-left: 3px solid #bf00ff !important; color: #bf00ff !important; }
+      .mazepin-badge { color: #FFD700 !important; }
+      .vr-badge { color: #bf00ff !important; }
       .session-row { border-bottom: 1px solid #333; padding: 15px 0; }
       .session-title { font-size: 1.1em; color: #e10600; font-weight: bold; margin-bottom: 10px; }
       .comparison-box { display: flex; justify-content: space-between; align-items: center; }
