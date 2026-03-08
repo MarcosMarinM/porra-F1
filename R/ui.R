@@ -70,22 +70,93 @@ ui <- fluidPage(
       .history-table td { vertical-align: middle !important; padding: 8px 6px !important; }
       .history-table .driver-badge { font-size: 0.9em; }
       .history-me { background-color: rgba(225, 6, 0, 0.12) !important; border-left: 3px solid #e10600; }
+
+      /* ===== Capture mode ===== */
+      .capture-branding { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 16px 10px; border-bottom: 3px solid #e10600; margin-bottom: 4px; }
+      .capture-logo { font-size: 1.6em; }
+      .capture-title { font-size: 1.1em; font-weight: 800; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
+      .capture-footer { text-align: right; padding: 6px 16px 10px; font-size: 0.75em; color: #555; }
+
+      .capture-mode { background: #1a1a1a !important; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
+      .capture-mode .card { border: none; box-shadow: none; margin-bottom: 0; background: transparent !important; }
+      .capture-mode .card-header { background: transparent !important; border-bottom: 1px solid #333; padding: 10px 16px; font-size: 0.95em; }
+      .capture-mode .card-body { padding: 12px 16px !important; }
+
+      /* GP analysis: comparison boxes stack vertically in capture */
+      .capture-mode .comparison-box { flex-direction: column; gap: 4px; }
+      .capture-mode .side-box { margin: 0; padding: 8px 10px; }
+      .capture-mode .session-row { padding: 10px 0; }
+      .capture-mode .session-title { font-size: 1em; }
+      .capture-mode .driver-badge { font-size: 0.85em; padding: 2px 5px; margin-right: 3px; }
+
+      /* Awards: 2 columns */
+      .capture-mode .award-card { padding: 14px 10px; margin-bottom: 10px; }
+      .capture-mode .award-emoji { font-size: 2em; margin-bottom: 4px; }
+      .capture-mode .award-name { font-size: 0.85em; }
+      .capture-mode .award-desc { font-size: 0.7em; margin: 4px 0 8px; }
+      .capture-mode .award-winner { font-size: 0.8em; padding: 5px 10px; }
+      .capture-mode .row > .col-sm-4 { width: 50%; float: left; }
+
+      /* Leaderboard & history tables */
+      .capture-mode .table { font-size: 0.95em; }
+      .capture-mode .points-badge { font-size: 0.85em; padding: 2px 7px; }
+      .capture-mode .user-header-block { font-size: 0.85em; padding: 4px 8px; }
+
+      /* Show context subtitle only in capture */
+      .capture-mode .capture-subtitle { display: block !important; padding: 8px 16px 4px; border-bottom: 1px solid #333; margin-bottom: 8px; }
     ")),
     tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
     tags$script(HTML("
       function captureElement(elementId, filename) {
         var el = document.getElementById(elementId);
         if (!el) return;
-        var btns = el.querySelectorAll('.screenshot-btn');
-        btns.forEach(function(b) { b.style.display = 'none'; });
-        html2canvas(el, { backgroundColor: '#1e1e1e', scale: 2 }).then(function(canvas) {
-          btns.forEach(function(b) { b.style.display = ''; });
+
+        /* -- preparar para captura -- */
+        el.classList.add('capture-mode');
+        var origWidth = el.style.width;
+        var origMaxWidth = el.style.maxWidth;
+        el.style.width = '540px';
+        el.style.maxWidth = '540px';
+
+        /* ocultar controles y botones */
+        var hide = el.querySelectorAll('.screenshot-btn, .capture-hide');
+        hide.forEach(function(b) { b.style.display = 'none'; });
+
+        /* inyectar cabecera con branding */
+        var header = document.createElement('div');
+        header.className = 'capture-branding';
+        header.innerHTML =
+          '<span class=\"capture-logo\">\\uD83C\\uDFC1</span>' +
+          '<span class=\"capture-title\">LA CARRERA M\\u00C1S SURREALIST</span>';
+        el.insertBefore(header, el.firstChild);
+
+        /* inyectar pie */
+        var footer = document.createElement('div');
+        footer.className = 'capture-footer';
+        var now = new Date();
+        footer.textContent = now.toLocaleDateString('es-ES', { day:'numeric', month:'short', year:'numeric' });
+        el.appendChild(footer);
+
+        html2canvas(el, { backgroundColor: '#1a1a1a', scale: 2, width: 540 }).then(function(canvas) {
+          /* -- restaurar -- */
+          el.classList.remove('capture-mode');
+          el.style.width = origWidth;
+          el.style.maxWidth = origMaxWidth;
+          hide.forEach(function(b) { b.style.display = ''; });
+          header.remove();
+          footer.remove();
+
           var link = document.createElement('a');
           link.download = filename + '.png';
           link.href = canvas.toDataURL();
           link.click();
         }).catch(function() {
-          btns.forEach(function(b) { b.style.display = ''; });
+          el.classList.remove('capture-mode');
+          el.style.width = origWidth;
+          el.style.maxWidth = origMaxWidth;
+          hide.forEach(function(b) { b.style.display = ''; });
+          header.remove();
+          footer.remove();
         });
       }
     ")),

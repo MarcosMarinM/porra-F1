@@ -3,10 +3,21 @@
 # ==============================================================================
 
 server <- function(input, output, session) {
+  # Credenciales: DB + invitado hardcoded
+  db_check <- check_credentials(db = DB_PATH)
+  guest_check <- function(user, password) {
+    if (tolower(user) == "guest" && password == "guest") {
+      list(result = TRUE, user_info = list(user = "guest", admin = FALSE))
+    } else {
+      db_check(user, password)
+    }
+  }
   res_auth <- secure_server(
-    check_credentials = check_credentials(db = DB_PATH)
+    check_credentials = guest_check,
+    keep_token = TRUE
   )
 
+  is_guest <- reactive({ tolower(res_auth$user) == "guest" })
   lang <- reactiveVal(DEFAULT_LANG)
   t <- function(key) tr(key, lang())
 
@@ -73,34 +84,45 @@ server <- function(input, output, session) {
       id = "main_tabset",
       tabPanel(
         t("tab_submit"), br(),
-        div(
-          class = "card", div(class = "card-header", t("new_porra")),
+        if (is_guest()) {
           div(
-            class = "card-body", style = "padding: 20px;",
-            fluidRow(
-              column(6, selectInput("gp", t("gp_label"), choices = NULL, width = "100%")),
-              column(6, selectInput("sesion", t("session_label"),
-                choices = c("", session_display(l)), width = "100%"))
-            ),
-            hr(style = "border-color: #444;"), h5(t("top5_label"), style = "color: #e10600;"),
-            fluidRow(
-              column(2, selectInput("p1", t("pos_1"), choices = NULL)),
-              column(2, selectInput("p2", t("pos_2"), choices = NULL)),
-              column(2, selectInput("p3", t("pos_3"), choices = NULL)),
-              column(3, selectInput("p4", t("pos_4"), choices = NULL)),
-              column(3, selectInput("p5", t("pos_5"), choices = NULL))
-            ),
-            conditionalPanel(
-              condition = "input.sesion == 'Carrera'",
-              hr(style = "border-color: #444;"), h5(t("extras_label"), style = "color: #e10600;"),
-              fluidRow(
-                column(6, selectInput("vr", t("fast_lap"), choices = NULL)),
-                column(6, selectInput("maz", t("mazepin_prize"), choices = NULL))
-              )
-            ),
-            br(), actionButton("submit", t("submit_btn"), class = "btn-primary btn-lg w-100", style = "font-weight:bold;")
+            class = "card",
+            div(class = "card-header", t("new_porra")),
+            div(class = "card-body", style = "padding: 40px; text-align: center; color: #888;",
+              icon("eye", "fa-3x"), br(), br(),
+              p(style = "font-size: 1.1em;", t("guest_notice"))
+            )
           )
-        )
+        } else {
+          div(
+            class = "card", div(class = "card-header", t("new_porra")),
+            div(
+              class = "card-body", style = "padding: 20px;",
+              fluidRow(
+                column(6, selectInput("gp", t("gp_label"), choices = NULL, width = "100%")),
+                column(6, selectInput("sesion", t("session_label"),
+                  choices = c("", session_display(l)), width = "100%"))
+              ),
+              hr(style = "border-color: #444;"), h5(t("top5_label"), style = "color: #e10600;"),
+              fluidRow(
+                column(2, selectInput("p1", t("pos_1"), choices = NULL)),
+                column(2, selectInput("p2", t("pos_2"), choices = NULL)),
+                column(2, selectInput("p3", t("pos_3"), choices = NULL)),
+                column(3, selectInput("p4", t("pos_4"), choices = NULL)),
+                column(3, selectInput("p5", t("pos_5"), choices = NULL))
+              ),
+              conditionalPanel(
+                condition = "input.sesion == 'Carrera'",
+                hr(style = "border-color: #444;"), h5(t("extras_label"), style = "color: #e10600;"),
+                fluidRow(
+                  column(6, selectInput("vr", t("fast_lap"), choices = NULL)),
+                  column(6, selectInput("maz", t("mazepin_prize"), choices = NULL))
+                )
+              ),
+              br(), actionButton("submit", t("submit_btn"), class = "btn-primary btn-lg w-100", style = "font-weight:bold;")
+            )
+          )
+        }
       ),
       tabPanel(
         t("tab_standings"), br(),
@@ -123,15 +145,17 @@ server <- function(input, output, session) {
             ),
             div(
               class = "card-body", style = "padding: 15px;",
-              selectInput("gp_stats", t("select_gp"), choices = NULL, width = "100%"),
-              div(
-                style = "text-align:center; margin-bottom:10px;",
-                radioButtons("view_scope", label = NULL,
-                  choices = stats::setNames(c("me", "all"), c(t("scope_me"), t("scope_all"))),
-                  selected = "me", inline = TRUE
-                )
+              div(class = "capture-hide",
+                selectInput("gp_stats", t("select_gp"), choices = NULL, width = "100%"),
+                div(
+                  style = "text-align:center; margin-bottom:10px;",
+                  radioButtons("view_scope", label = NULL,
+                    choices = stats::setNames(c("me", "all"), c(t("scope_me"), t("scope_all"))),
+                    selected = "me", inline = TRUE
+                  )
+                ),
+                hr(style = "border-color: #444;")
               ),
-              hr(style = "border-color: #444;"),
               uiOutput("gp_breakdown_ui")
             )
           ))
@@ -210,12 +234,14 @@ server <- function(input, output, session) {
               icon("camera"), t("screenshot_btn"))
           ),
           div(class = "card-body", style = "padding: 15px;",
-            fluidRow(
-              column(6, selectInput("history_gp", t("gp_label"), choices = NULL, width = "100%")),
-              column(6, selectInput("history_session", t("session_label"),
-                choices = NULL, width = "100%"))
+            div(class = "capture-hide",
+              fluidRow(
+                column(6, selectInput("history_gp", t("gp_label"), choices = NULL, width = "100%")),
+                column(6, selectInput("history_session", t("session_label"),
+                  choices = NULL, width = "100%"))
+              ),
+              hr(style = "border-color: #444;")
             ),
-            hr(style = "border-color: #444;"),
             uiOutput("history_table_ui")
           )
         )
@@ -257,6 +283,7 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$submit, {
+    req(!is_guest())
     req(input$gp, input$sesion, input$p1)
     top5 <- c(input$p1, input$p2, input$p3, input$p4, input$p5)
     if (any(duplicated(top5[top5 != ""]))) {
@@ -346,13 +373,14 @@ server <- function(input, output, session) {
   })
 
   # --- LEADERBOARD ---
-  output$leaderboard_ui <- renderUI({
+  ranking_data <- reactive({
     req(scores())
-    ranking <- scores() %>%
-      group_by(usuario) %>%
-      summarise(Total = sum(pts_total, na.rm = TRUE), .groups = "drop") %>%
-      arrange(desc(Total)) %>%
-      mutate(Rank = row_number())
+    compute_ranking(scores())
+  })
+
+  output$leaderboard_ui <- renderUI({
+    ranking <- ranking_data()
+    if (is.null(ranking)) return(NULL)
     tags$table(
       class = "table table-striped table-hover", style = "margin-bottom:0;",
       tags$thead(tags$tr(tags$th(t("col_rank")), tags$th(t("col_pilot")), tags$th(t("col_pts")))),
@@ -382,13 +410,24 @@ server <- function(input, output, session) {
     if (input$view_scope == "me") {
       user_data <- user_data %>% filter(usuario == res_auth$user)
     } else {
-      user_data <- user_data %>% arrange(desc(usuario == res_auth$user), desc(pts_total))
+      user_data <- user_data %>%
+        arrange(match(sesion, SESSION_VALUES), usuario)
     }
     if (nrow(user_data) == 0) {
       return(div(style = "text-align:center; padding: 40px; color: #666;", icon("wind", "fa-3x"), br(), t("no_data")))
     }
 
+    # Subtítulo visible solo en captura (GP + quién)
+    scope_label <- if (input$view_scope == "me") toupper(res_auth$user) else t("scope_all")
+    capture_subtitle <- div(
+      class = "capture-subtitle",
+      style = "display:none;",
+      span(style = "font-size:1.1em; font-weight:bold; color:#e0e0e0;", input$gp_stats),
+      span(style = "color:#666; margin-left:8px; font-size:0.85em;", paste0("(", scope_label, ")"))
+    )
+
     tagList(
+      capture_subtitle,
       lapply(1:nrow(user_data), function(i) {
         fila <- user_data[i, ]
         res_real <- get_results(fila$gp, fila$sesion, CURRENT_YEAR)
@@ -471,6 +510,7 @@ server <- function(input, output, session) {
         legend.text = element_text(color = "#e0e0e0"),
         legend.key = element_rect(fill = "#1e1e1e")
       ) +
+      scale_y_continuous(limits = c(0, NA)) +
       labs(x = NULL, y = t("col_pts"), color = t("col_pilot"))
 
     ggplotly(p, tooltip = "text") |>
@@ -485,8 +525,9 @@ server <- function(input, output, session) {
   # PREMIOS DIVERTIDOS
   # ===========================================================================
   output$awards_ui <- renderUI({
-    req(scores())
+    req(scores(), ranking_data())
     sc <- scores()
+    champ <- ranking_data() |> select(usuario, Rank)
 
     for (col in c("pts_p1", "pts_p2", "pts_p3", "pts_p4", "pts_p5", "pts_vr", "pts_maz")) {
       if (!col %in% names(sc)) sc[[col]] <- 0
@@ -497,13 +538,26 @@ server <- function(input, output, session) {
       return(div(style = "text-align:center; padding:40px; color:#666;", t("no_awards_data")))
     }
 
+    # Helper: desempate por posición en el campeonato
+    # negative = TRUE para premios "negativos" (el peor clasificado "gana")
+    break_tie <- function(df, negative = FALSE) {
+      if (nrow(df) <= 1) return(df)
+      df <- df |> left_join(champ, by = "usuario")
+      df <- if (negative) {
+        df |> slice_max(Rank, n = 1, with_ties = FALSE)
+      } else {
+        df |> slice_min(Rank, n = 1, with_ties = FALSE)
+      }
+      df |> select(-Rank)
+    }
+
     awards <- list()
     by_gp <- sc |>
       group_by(usuario, gp) |>
       summarise(pts = sum(pts_total), .groups = "drop")
 
     # 1. Oráculo
-    best_gp <- by_gp |> slice_max(pts, n = 1, with_ties = FALSE)
+    best_gp <- by_gp |> slice_max(pts, n = 1, with_ties = TRUE) |> break_tie()
     awards[[length(awards) + 1]] <- list(
       emoji = "\U0001f52e", name = t("award_oracle"), desc = t("award_oracle_desc"),
       winner = paste0(toupper(best_gp$usuario), " \u2014 ", best_gp$gp, " (", best_gp$pts, " pts)")
@@ -522,14 +576,14 @@ server <- function(input, output, session) {
     best_exact <- sc2 |>
       group_by(usuario) |>
       summarise(total_exact = sum(exact_count), .groups = "drop") |>
-      slice_max(total_exact, n = 1, with_ties = FALSE)
+      slice_max(total_exact, n = 1, with_ties = TRUE) |> break_tie()
     awards[[length(awards) + 1]] <- list(
       emoji = "\U0001f3af", name = t("award_sniper"), desc = t("award_sniper_desc"),
       winner = paste0(toupper(best_exact$usuario), " (", best_exact$total_exact, ")")
     )
 
     # 3. Sesión estelar
-    best_session <- sc |> slice_max(pts_total, n = 1, with_ties = FALSE)
+    best_session <- sc |> slice_max(pts_total, n = 1, with_ties = TRUE) |> break_tie()
     awards[[length(awards) + 1]] <- list(
       emoji = "\u2b50", name = t("award_star_session"), desc = t("award_star_session_desc"),
       winner = paste0(toupper(best_session$usuario), " \u2014 ",
@@ -538,7 +592,7 @@ server <- function(input, output, session) {
     )
 
     # 4. GP para olvidar
-    worst_gp <- by_gp |> slice_min(pts, n = 1, with_ties = FALSE)
+    worst_gp <- by_gp |> slice_min(pts, n = 1, with_ties = TRUE) |> break_tie(negative = TRUE)
     awards[[length(awards) + 1]] <- list(
       emoji = "\U0001f480", name = t("award_forgettable"), desc = t("award_forgettable_desc"),
       winner = paste0(toupper(worst_gp$usuario), " \u2014 ", worst_gp$gp, " (", worst_gp$pts, " pts)")
@@ -548,13 +602,13 @@ server <- function(input, output, session) {
     best_maz <- sc |>
       group_by(usuario) |>
       summarise(maz_ok = sum(pts_maz > 0), .groups = "drop") |>
-      slice_max(maz_ok, n = 1, with_ties = FALSE)
+      slice_max(maz_ok, n = 1, with_ties = TRUE) |> break_tie()
     awards[[length(awards) + 1]] <- list(
       emoji = "\U0001f422", name = t("award_mazepin_king"), desc = t("award_mazepin_king_desc"),
       winner = paste0(toupper(best_maz$usuario), " (", best_maz$maz_ok, ")")
     )
 
-    # 6. Piloto del pueblo
+    # 6. Piloto del pueblo (no es por usuario — sin desempate)
     db <- get_db()
     long <- db |>
       select(p1, p2, p3, p4, p5) |>
@@ -566,6 +620,132 @@ server <- function(input, output, session) {
       awards[[length(awards) + 1]] <- list(
         emoji = "\U0001f3ce\ufe0f", name = t("award_peoples_driver"), desc = t("award_peoples_driver_desc"),
         winner = paste0(top_driver$driver, " (", top_driver$n, " ", t("award_picks"), ")")
+      )
+    }
+
+    # 7. Bola de cristal — más veces acertando el P1
+    p1_hits <- sc |>
+      filter(pts_p1 > 0) |>
+      count(usuario) |>
+      slice_max(n, n = 1, with_ties = TRUE) |> break_tie()
+    if (nrow(p1_hits) > 0) {
+      awards[[length(awards) + 1]] <- list(
+        emoji = "\U0001f3b1", name = t("award_crystal_ball"), desc = t("award_crystal_ball_desc"),
+        winner = paste0(toupper(p1_hits$usuario), " (", p1_hits$n, ")")
+      )
+    }
+
+    # 8. Bocachancla — más sesiones con 0 puntos
+    zeroes <- sc |>
+      filter(pts_total == 0) |>
+      count(usuario) |>
+      slice_max(n, n = 1, with_ties = TRUE) |> break_tie(negative = TRUE)
+    if (nrow(zeroes) > 0) {
+      awards[[length(awards) + 1]] <- list(
+        emoji = "\U0001f92b", name = t("award_bigmouth"), desc = t("award_bigmouth_desc"),
+        winner = paste0(toupper(zeroes$usuario), " (", zeroes$n, ")")
+      )
+    }
+
+    # 9. Mr. Consistente — menor desviación típica de puntos por GP
+    if (length(unique(by_gp$gp)) >= 2) {
+      consistency <- by_gp |>
+        group_by(usuario) |>
+        summarise(sd_pts = sd(pts, na.rm = TRUE), .groups = "drop") |>
+        slice_min(sd_pts, n = 1, with_ties = TRUE) |> break_tie()
+      awards[[length(awards) + 1]] <- list(
+        emoji = "\U0001f9d8", name = t("award_consistent"), desc = t("award_consistent_desc"),
+        winner = paste0(toupper(consistency$usuario), " (\u03c3 = ", round(consistency$sd_pts, 1), ")")
+      )
+    }
+
+    # 10. Borreguismo — pareja que más coincide en predicciones (sin desempate)
+    if (length(unique(db$usuario)) >= 2) {
+      db_preds <- db |>
+        select(usuario, gp, sesion, p1, p2, p3, p4, p5)
+      usuarios <- sort(unique(db_preds$usuario))
+      best_pair <- NULL
+      best_coincidences <- -1
+      for (a_i in seq_along(usuarios)[-length(usuarios)]) {
+        for (b_i in (a_i + 1):length(usuarios)) {
+          merged <- inner_join(
+            db_preds |> filter(usuario == usuarios[a_i]),
+            db_preds |> filter(usuario == usuarios[b_i]),
+            by = c("gp", "sesion"), suffix = c("_a", "_b")
+          )
+          if (nrow(merged) == 0) next
+          coincidences <- sum(
+            merged$p1_a == merged$p1_b & !is.na(merged$p1_a),
+            merged$p2_a == merged$p2_b & !is.na(merged$p2_a),
+            merged$p3_a == merged$p3_b & !is.na(merged$p3_a),
+            merged$p4_a == merged$p4_b & !is.na(merged$p4_a),
+            merged$p5_a == merged$p5_b & !is.na(merged$p5_a)
+          )
+          if (coincidences > best_coincidences) {
+            best_coincidences <- coincidences
+            best_pair <- c(usuarios[a_i], usuarios[b_i])
+          }
+        }
+      }
+      if (!is.null(best_pair)) {
+        awards[[length(awards) + 1]] <- list(
+          emoji = "\U0001f411", name = t("award_copycat"), desc = t("award_copycat_desc"),
+          winner = paste0(toupper(best_pair[1]), " & ", toupper(best_pair[2]), " (", best_coincidences, ")")
+        )
+      }
+    }
+
+    # 11. Rey del GP — más victorias de GP
+    # Victorias de GP: desempatar sesiones por campeonato antes de contar
+    gp_winners <- by_gp |>
+      group_by(gp) |>
+      slice_max(pts, n = 1, with_ties = TRUE) |>
+      break_tie() |>
+      ungroup() |>
+      count(usuario) |>
+      slice_max(n, n = 1, with_ties = TRUE) |> break_tie()
+    if (nrow(gp_winners) > 0) {
+      awards[[length(awards) + 1]] <- list(
+        emoji = "\U0001f451", name = t("award_gp_king"), desc = t("award_gp_king_desc"),
+        winner = paste0(toupper(gp_winners$usuario), " (", gp_winners$n, " ", t("award_gp_wins"), ")")
+      )
+    }
+
+    # 12. Racha imparable — mayor racha consecutiva de victorias de sesión
+    cal <- get_calendar(CURRENT_YEAR)
+    sc_ordered <- sc |>
+      mutate(
+        gp = factor(gp, levels = cal),
+        sesion = factor(sesion, levels = SESSION_VALUES)
+      ) |>
+      arrange(gp, sesion)
+    # Desempatar ganadores de sesión por campeonato
+    session_win_list <- sc_ordered |>
+      group_by(gp, sesion) |>
+      slice_max(pts_total, n = 1, with_ties = TRUE) |>
+      break_tie() |>
+      ungroup() |>
+      arrange(gp, sesion) |>
+      pull(usuario)
+    all_users <- unique(sc$usuario)
+    best_streak_user <- NULL
+    best_streak_n <- 0
+    for (u in all_users) {
+      streak <- 0
+      max_streak <- 0
+      for (w in session_win_list) {
+        if (w == u) { streak <- streak + 1; max_streak <- max(max_streak, streak) }
+        else { streak <- 0 }
+      }
+      if (max_streak > best_streak_n) {
+        best_streak_n <- max_streak
+        best_streak_user <- u
+      }
+    }
+    if (best_streak_n >= 2) {
+      awards[[length(awards) + 1]] <- list(
+        emoji = "\U0001f525", name = t("award_hot_streak"), desc = t("award_hot_streak_desc"),
+        winner = paste0(toupper(best_streak_user), " (", best_streak_n, " ", t("award_sessions_suffix"), ")")
       )
     }
 
@@ -692,11 +872,22 @@ server <- function(input, output, session) {
       tags$tr(class = row_class, cells)
     })
 
-    tags$table(
-      class = "table table-hover history-table",
-      style = "margin-bottom:0; text-align:center;",
-      tags$thead(tags$tr(header_cells)),
-      tags$tbody(rows)
+    history_subtitle <- div(
+      class = "capture-subtitle",
+      style = "display:none;",
+      span(style = "font-size:1.1em; font-weight:bold; color:#e0e0e0;", input$history_gp),
+      span(style = "color:#666; margin-left:8px; font-size:0.85em;",
+        paste0("(", translate_session_name(input$history_session), ")"))
+    )
+
+    tagList(
+      history_subtitle,
+      tags$table(
+        class = "table table-hover history-table",
+        style = "margin-bottom:0; text-align:center;",
+        tags$thead(tags$tr(header_cells)),
+        tags$tbody(rows)
+      )
     )
   })
 }
