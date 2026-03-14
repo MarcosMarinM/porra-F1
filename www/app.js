@@ -1,6 +1,7 @@
 // Configuración: la app se sirve desde la misma URL que la API.
 // Si quieres apuntar a otro host, define window.API_BASE antes de cargar app.js.
-const API_BASE = window.API_BASE || window.location.origin;
+// Nota: si abres index.html con file://, window.location.origin es "null".
+const API_BASE = window.API_BASE || (window.location.protocol === "file:" ? "http://127.0.0.1:8000" : window.location.origin);
 const STORAGE_TOKEN = "porra_f1_token";
 
 function apiFetch(path, options = {}) {
