@@ -145,6 +145,17 @@ function(req, res) {
   plumber::forward()
 }
 
+# --- Fix: quitar Content-Length erróneo para archivos estáticos ------------
+# (Permite que el navegador reciba el JS completo aunque el header sea incorrecto)
+#* @filter fix_content_length
+function(req, res) {
+  plumber::forward()
+  if (!is.null(res$headers$`Content-Length`)) {
+    res$setHeader("Content-Length", NULL)
+  }
+  res
+}
+
 # --- Endpoints -----------------------------------------------------------
 #* @get /health
 function() {
@@ -244,6 +255,10 @@ function(req, res, gp = NULL, sesion = NULL, p1 = NULL, p2 = NULL, p3 = NULL, p4
 
 #* @plumber
 function(pr) {
-  # Sirve los archivos estáticos de la UI (carpeta www) en la raíz
-  pr %>% pr_static("/", "www")
+  # Evitar que plumber devuelva arrays para valores escalares (por ejemplo token/user)
+  # y evitar errores de OpenAPI al construir documentación.
+  pr %>%
+    pr_set_docs(FALSE) %>%
+    pr_set_serializer(serializer_unboxed_json()) %>%
+    pr_static("/", "www")
 }
