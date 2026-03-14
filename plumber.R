@@ -236,3 +236,9 @@ function(req, res, gp = NULL, sesion = NULL, p1 = NULL, p2 = NULL, p3 = NULL, p4
   sheet_append(SHEET_ID, new_row)
   list(success = TRUE, message = "created")
 }
+
+#* @plumber
+function(pr) {
+  # Sirve los archivos estáticos de la UI (carpeta www) en la raíz
+  pr %>% pr_static("/", "www")
+}

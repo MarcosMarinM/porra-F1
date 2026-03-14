@@ -1,5 +1,6 @@
-// Configuración: cambia esto a la URL de tu API (Render) cuando despliegues.
-const API_BASE = window.API_BASE || "http://localhost:8000";
+// Configuración: la app se sirve desde la misma URL que la API.
+// Si quieres apuntar a otro host, define window.API_BASE antes de cargar app.js.
+const API_BASE = window.API_BASE || window.location.origin;
 const STORAGE_TOKEN = "porra_f1_token";
 
 function apiFetch(path, options = {}) {

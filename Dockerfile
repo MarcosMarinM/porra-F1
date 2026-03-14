@@ -9,7 +9,7 @@ WORKDIR /app
 COPY . /app
 
 # Instala las dependencias de R necesarias para la API
-RUN R -e "options(repos='https://cloud.r-project.org'); install.packages(c('plumber','shiny','shinymanager','googlesheets4','dplyr','httr2','jsonlite','memoise','cachem','bslib','ggplot2','tidyr','plotly','uuid','RSQLite'))"
+RUN R -e "options(repos='https://cloud.r-project.org'); install.packages(c('plumber','shiny','shinymanager','googlesheets4','dplyr','httr2','jsonlite','memoise','cachem','bslib','ggplot2','tidyr','plotly','uuid','RSQLite','base64enc'))"
 
 EXPOSE 8000
 CMD ["R", "-e", "pr <- plumber::plumb('plumber.R'); pr$run(host='0.0.0.0', port=8000)"]

@@ -12,6 +12,21 @@ if (SHEET_ID == "") stop("ERROR: Falta configurar F1_SHEET_ID en el archivo .Ren
 json_path <- Sys.getenv("F1_JSON_PATH")
 if (json_path == "") json_path <- "f1-service-account.json"
 
+# Preferir credenciales inyectadas desde entorno (por ejemplo Render env var)
+json_env <- Sys.getenv("F1_SERVICE_ACCOUNT_JSON")
+if (json_env != "") {
+  # Permite enviar JSON plano o base64
+  if (!file.exists(json_path)) {
+    json_content <- if (grepl("^\s*\{", json_env)) {
+      json_env
+    } else {
+      if (!requireNamespace("base64enc", quietly = TRUE)) stop("Package base64enc is required to decode F1_SERVICE_ACCOUNT_JSON")
+      rawToChar(base64enc::base64decode(json_env))
+    }
+    writeLines(json_content, con = json_path)
+  }
+}
+
 # --- B. GOOGLE SHEETS & AUTENTICACIÓN ---
 if (file.exists(json_path) && json_path != "") {
   gs4_auth(path = json_path)
