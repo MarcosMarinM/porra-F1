@@ -150,6 +150,8 @@ function(req, res) {
 #* @filter fix_content_length
 function(req, res) {
   plumber::forward()
+  # Evitar caching agresivo que podría servir JS truncado
+  res$setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
   if (!is.null(res$headers$`Content-Length`)) {
     res$setHeader("Content-Length", NULL)
   }
