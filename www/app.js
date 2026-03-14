@@ -241,3 +241,6 @@ window.addEventListener("DOMContentLoaded", () => {
     initLogin();
   }
 });
+
+// Debug: confirm script loaded to completion
+console.log('[app.js] end-of-file reached');
