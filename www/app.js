@@ -154,6 +154,10 @@ async function refreshAppData() {
       const userLabel = ensureString(row.usuario).toUpperCase();
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${idx + 1}</td><td>${userLabel}</td><td>${row.Total || 0}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
 function ensureString(value) {
   if (typeof value === "string") return value;
   if (Array.isArray(value) && value.length > 0) return String(value[0]);

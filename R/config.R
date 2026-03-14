@@ -17,7 +17,7 @@ json_env <- Sys.getenv("F1_SERVICE_ACCOUNT_JSON")
 if (json_env != "") {
   # Permite enviar JSON plano o base64
   if (!file.exists(json_path)) {
-    json_content <- if (grepl("^\s*\{", json_env)) {
+    json_content <- if (grepl("^\\s*\\{", json_env)) {
       json_env
     } else {
       if (!requireNamespace("base64enc", quietly = TRUE)) stop("Package base64enc is required to decode F1_SERVICE_ACCOUNT_JSON")

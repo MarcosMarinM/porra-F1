@@ -97,6 +97,11 @@
       </main>
     </div>
   </div>
+  <script>
+    // For local development when frontend is served on localhost:8080
+    // force API to the plumber backend port used for testing.
+    window.API_BASE = "http://127.0.0.1:8001";
+  </script>
   <script src="app.js?v=2"></script>
   <!-- Evita que el navegador use una versión vieja en caché -->
 </body>
