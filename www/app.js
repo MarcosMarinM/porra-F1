@@ -65,8 +65,9 @@ async function doLogin(user, pwd, remember) {
       method: "POST",
       body: JSON.stringify({ user, pwd }),
     });
+    const userName = Array.isArray(resp.user) ? resp.user[0] : resp.user;
     setToken(resp.token, remember);
-    initApp(resp.user);
+    initApp(userName);
   } catch (err) {
     showError(loginError, err.message);
   }

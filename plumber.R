@@ -162,13 +162,18 @@ function(req, res, user = NULL, pwd = NULL) {
 
   if (tolower(user) == "guest" && pwd == "guest") {
     token <- make_token("guest")
-    return(list(success = TRUE, token = token, user = "guest", admin = FALSE))
+    return(list(success = TRUE, token = as.character(token), user = "guest", admin = FALSE))
   }
 
   auth <- db_check(user, pwd)
   if (isTRUE(auth$result)) {
     token <- make_token(auth$user_info$user)
-    return(list(success = TRUE, token = token, user = auth$user_info$user, admin = auth$user_info$admin))
+    return(list(
+      success = TRUE,
+      token = as.character(token),
+      user = as.character(auth$user_info$user),
+      admin = as.logical(auth$user_info$admin)
+    ))
   }
 
   res$status <- 401
