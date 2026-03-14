@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>La carrera más surrealist</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="login-screen" class="screen">
+      <div class="card login-card">
+        <h2>🏁 IDENTIFÍCATE</h2>
+        <div class="field">
+          <label>Código de piloto</label>
+          <input id="login-user" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input id="login-pwd" type="password" autocomplete="current-password" />
+        </div>
+        <div class="field">
+          <label><input type="checkbox" id="remember-me" /> Recordarme</label>
+        </div>
+        <button id="login-btn" class="primary">ENTRAR</button>
+        <button id="guest-btn" class="secondary">Acceder como invitado</button>
+        <div id="login-error" class="error" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div id="app-screen" class="screen hidden">
+      <header class="topbar">
+        <div class="brand">LA CARRERA MÁS SURREALIST</div>
+        <div class="user-info">
+          <span id="user-label"></span>
+          <button id="logout-btn" class="secondary">Salir</button>
+        </div>
+      </header>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="porra">Enviar pronóstico</button>
+        <button class="tab" data-tab="leaderboard">Clasificación</button>
+      </div>
+
+      <main class="tab-content">
+        <section id="tab-porra" class="tab-panel">
+          <div class="card">
+            <div class="card-header">Nueva porra</div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <label>Gran Premio</label>
+                  <select id="gp-select"></select>
+                </div>
+                <div class="col">
+                  <label>Sesión</label>
+                  <select id="sesion-select">
+                    <option value="">Seleccione sesión</option>
+                    <option value="Carrera">Carrera</option>
+                    <option value="Clasificación">Clasificación</option>
+                    <option value="Esprint">Esprint</option>
+                    <option value="Clasificación del esprint">Clasificación del esprint</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="top5-row" class="row"></div>
+
+              <div id="extras-race" class="row extras-row hidden">
+                <div class="col">
+                  <label>Vuelta rápida</label>
+                  <select id="vr-select"></select>
+                </div>
+                <div class="col">
+                  <label>Premio Mazepin</label>
+                  <select id="maz-select"></select>
+                </div>
+              </div>
+
+              <button id="submit-btn" class="primary">ENVIAR PORRA</button>
+              <div id="submit-message" class="message"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="tab-leaderboard" class="tab-panel hidden">
+          <div class="card">
+            <div class="card-header">Clasificación</div>
+            <div class="card-body">
+              <table class="table" id="leaderboard-table">
+                <thead><tr><th>#</th><th>Piloto</th><th>Pts</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

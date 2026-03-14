@@ -1,0 +1,99 @@
+/* Theme inspirado en la app Shiny original */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  background: #0b0b0b;
+  color: #e0e0e0;
+}
+
+a { color: #e10600; }
+
+.hidden { display: none !important; }
+
+#app { min-height: 100vh; }
+
+.card {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 10px;
+  margin: 16px auto;
+  max-width: 1040px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+.card-header {
+  background: #2c2c2c;
+  border-bottom: 1px solid #e10600;
+  padding: 14px 18px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 1.05em;
+}
+.card-body {
+  padding: 18px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: #1a1a1a;
+  border-bottom: 2px solid #e10600;
+}
+.topbar .brand {
+  font-weight: 900;
+  letter-spacing: 1px;
+  font-size: 1.2em;
+}
+.topbar .user-info {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.tabs { display: flex; border-bottom: 1px solid #333; }
+.tab { flex: 1; padding: 12px 16px; cursor: pointer; background: #141414; border: 1px solid #222; border-bottom: none; color: #ccc; font-weight: bold; }
+.tab.active { background: #1f1f1f; color: #fff; border-color: #e10600; }
+.tab:hover { background: #1b1b1b; }
+
+.tab-content { padding: 18px; }
+
+.row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.col { flex: 1; min-width: 220px; }
+
+label { display: block; margin-bottom: 6px; color: #bbb; font-size: 0.9em; }
+select, input[type=text], input[type=password] {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #0f0f0f;
+  color: #e0e0e0;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+button.primary { background: #e10600; color: white; }
+button.secondary { background: #2d2d2d; color: #ccc; }
+button.primary:hover { background: #ff1c13; }
+button.secondary:hover { background: #3a3a3a; }
+
+.login-card { max-width: 380px; margin: 60px auto; }
+.error { color: #ff6b6b; margin-top: 10px; }
+.message { margin-top: 14px; color: #a0a0a0; }
+
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #2a2a2a; }
+.table th { color: #bbb; font-weight: 700; }
+
+@media (max-width: 640px) {
+  .tabs { flex-direction: column; }
+  .tab { text-align: center; }
+}
