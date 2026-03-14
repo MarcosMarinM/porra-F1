@@ -4,6 +4,17 @@
 const API_BASE = window.API_BASE || (window.location.protocol === "file:" ? "http://127.0.0.1:8000" : window.location.origin);
 const STORAGE_TOKEN = "porra_f1_token";
 
+console.log("[app.js] loaded, API_BASE=", API_BASE);
+
+window.onerror = function(message, source, lineno, colno, error) {
+  console.error("Unhandled error:", message, source, lineno, colno, error);
+  const errEl = document.getElementById("login-error");
+  if (errEl) {
+    errEl.textContent = "Error en la app: " + message;
+    errEl.style.display = "block";
+  }
+};
+
 function apiFetch(path, options = {}) {
   const token = localStorage.getItem(STORAGE_TOKEN);
   const headers = {
