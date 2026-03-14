@@ -140,14 +140,19 @@ async function refreshAppData() {
   const tbody = document.querySelector("#leaderboard-table tbody");
   tbody.innerHTML = "";
   leaderboard.forEach((row, idx) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${idx + 1}</td><td>${(row.usuario || "").toUpperCase()}</td><td>${row.Total || 0}</td>`;
-    tbody.appendChild(tr);
-  });
+      const userLabel = ensureString(row.usuario).toUpperCase();
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${idx + 1}</td><td>${userLabel}</td><td>${row.Total || 0}</td>`;
+function ensureString(value) {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value) && value.length > 0) return String(value[0]);
+  if (value == null) return "";
+  return String(value);
 }
 
 function initApp(user) {
-  document.getElementById("user-label").textContent = user ? user.toUpperCase() : "";
+  const userStr = ensureString(user);
+  document.getElementById("user-label").textContent = userStr ? userStr.toUpperCase() : "";
   showScreen("app-screen");
   setTab("porra");
   refreshAppData().catch((err) => console.error(err));
