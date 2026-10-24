@@ -118,6 +118,13 @@ server <- function(input, output, session) {
   # --- TABS PRINCIPALES ---
   output$main_tabs <- renderUI({
     l <- lang()
+    cal <- get_calendar(CURRENT_YEAR)
+    if (is.null(cal)) cal <- FALLBACK_CALENDAR_2026
+    pilots <- get_drivers(CURRENT_YEAR)
+    if (is.null(pilots) || length(pilots) == 0) pilots <- sort(FALLBACK_DRIVERS_2026)
+    gp_choices <- c("", cal)
+    pilot_choices <- sort(c("", pilots))
+    sd <- session_display(l)
     tabsetPanel(
       id = "main_tabset",
       tabPanel(
@@ -137,24 +144,25 @@ server <- function(input, output, session) {
             div(
               class = "card-body", style = "padding: 20px;",
               fluidRow(
-                column(6, selectInput("gp", t("gp_label"), choices = NULL, width = "100%")),
+                column(6, selectInput("gp", t("gp_label"), choices = gp_choices,
+                  selected = isolate(input$gp) %||% "", width = "100%")),
                 column(6, selectInput("sesion", t("session_label"),
-                  choices = c("", session_display(l)), width = "100%"))
+                  choices = c("", sd), selected = isolate(input$sesion) %||% "", width = "100%"))
               ),
               hr(style = "border-color: #444;"), h5(t("top5_label"), style = "color: #e10600;"),
               fluidRow(
-                column(2, selectInput("p1", t("pos_1"), choices = NULL)),
-                column(2, selectInput("p2", t("pos_2"), choices = NULL)),
-                column(2, selectInput("p3", t("pos_3"), choices = NULL)),
-                column(3, selectInput("p4", t("pos_4"), choices = NULL)),
-                column(3, selectInput("p5", t("pos_5"), choices = NULL))
+                column(2, selectInput("p1", t("pos_1"), choices = pilot_choices, selected = isolate(input$p1) %||% "")),
+                column(2, selectInput("p2", t("pos_2"), choices = pilot_choices, selected = isolate(input$p2) %||% "")),
+                column(2, selectInput("p3", t("pos_3"), choices = pilot_choices, selected = isolate(input$p3) %||% "")),
+                column(3, selectInput("p4", t("pos_4"), choices = pilot_choices, selected = isolate(input$p4) %||% "")),
+                column(3, selectInput("p5", t("pos_5"), choices = pilot_choices, selected = isolate(input$p5) %||% ""))
               ),
               conditionalPanel(
                 condition = "input.sesion == 'Carrera'",
                 hr(style = "border-color: #444;"), h5(t("extras_label"), style = "color: #e10600;"),
                 fluidRow(
-                  column(6, selectInput("vr", t("fast_lap"), choices = NULL)),
-                  column(6, selectInput("maz", t("mazepin_prize"), choices = NULL))
+                  column(6, selectInput("vr", t("fast_lap"), choices = pilot_choices, selected = isolate(input$vr) %||% "")),
+                  column(6, selectInput("maz", t("mazepin_prize"), choices = pilot_choices, selected = isolate(input$maz) %||% ""))
                 )
               ),
               br(), actionButton("submit", t("submit_btn"), class = "btn-primary btn-lg w-100", style = "font-weight:bold;")
@@ -184,7 +192,8 @@ server <- function(input, output, session) {
             div(
               class = "card-body", style = "padding: 15px;",
               div(class = "capture-hide",
-                selectInput("gp_stats", t("select_gp"), choices = NULL, width = "100%"),
+                selectInput("gp_stats", t("select_gp"), choices = gp_choices,
+                  selected = isolate(input$gp_stats) %||% "", width = "100%"),
                 div(
                   style = "text-align:center; margin-bottom:10px;",
                   radioButtons("view_scope", label = NULL,
@@ -256,7 +265,8 @@ server <- function(input, output, session) {
           div(class = "card-header", icon("fire"), t("heatmap_title")),
           div(class = "card-body", style = "padding: 15px;",
             selectInput("heatmap_session", t("session_label"),
-              choices = NULL, width = "40%"),
+              choices = c(stats::setNames("all", t("all_sessions")), sd),
+              selected = isolate(input$heatmap_session) %||% "all", width = "40%"),
             plotlyOutput("heatmap_plot", height = "500px")
           )
         )
@@ -274,9 +284,10 @@ server <- function(input, output, session) {
           div(class = "card-body", style = "padding: 15px;",
             div(class = "capture-hide",
               fluidRow(
-                column(6, selectInput("history_gp", t("gp_label"), choices = NULL, width = "100%")),
+                column(6, selectInput("history_gp", t("gp_label"),
+                  choices = gp_choices, selected = isolate(input$history_gp) %||% "", width = "100%")),
                 column(6, selectInput("history_session", t("session_label"),
-                  choices = NULL, width = "100%"))
+                  choices = c("", sd), selected = isolate(input$history_session) %||% "", width = "100%"))
               ),
               hr(style = "border-color: #444;")
             ),
