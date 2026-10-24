@@ -231,3 +231,7 @@ TEAM_COLOURS_2026 <- list(
 )
 
 FALLBACK_DRIVERS_2026 <- names(TEAM_COLOURS_2026)
+
+MAZEPIN_OVERRIDES <- c(
+  "Bahrain Grand Prix|Carrera" = "BOT"
+)

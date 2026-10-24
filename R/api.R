@@ -56,6 +56,30 @@ openf1_access_token <- function(force = FALSE) {
   )
 }
 
+normalise_api_df <- function(parsed) {
+  df <- as.data.frame(parsed, stringsAsFactors = FALSE)
+
+  numeric_cols <- c(
+    "position", "number_of_laps", "lap_duration", "driver_number",
+    "session_key", "meeting_key", "year"
+  )
+  for (col in intersect(numeric_cols, names(df))) {
+    df[[col]] <- suppressWarnings(as.numeric(as.character(df[[col]])))
+  }
+
+  logical_cols <- c("dnf", "dns", "dsq", "is_cancelled")
+  for (col in intersect(logical_cols, names(df))) {
+    x <- df[[col]]
+    if (is.character(x)) {
+      df[[col]] <- tolower(x) %in% c("true", "t", "1")
+    } else {
+      df[[col]] <- as.logical(x)
+    }
+  }
+
+  df
+}
+
 fetch_api <- function(endpoint, params = list(), timeout = 10) {
   url <- paste0(BASE_URL, endpoint)
   tryCatch(
@@ -83,7 +107,7 @@ fetch_api <- function(endpoint, params = list(), timeout = 10) {
       if (resp_status(resp) >= 400) return(NULL)
       parsed <- resp_body_json(resp, simplifyVector = TRUE)
       if (length(parsed) == 0) return(NULL)
-      as.data.frame(parsed)
+      normalise_api_df(parsed)
     },
     error = function(e) {
       warning("OpenF1 ", endpoint, ": ", conditionMessage(e), call. = FALSE)
@@ -312,6 +336,7 @@ get_results_raw <- function(gp_name, session_name, year) {
   if (!all(c("driver_number", "position") %in% names(res))) return(NULL)
 
   full_res <- merge(res, d_map, by = "driver_number", all.x = TRUE, sort = FALSE)
+  full_res$position <- suppressWarnings(as.numeric(as.character(full_res$position)))
   full_res <- full_res[!is.na(full_res$position), , drop = FALSE]
   if (nrow(full_res) == 0) return(NULL)
   full_res <- full_res[order(full_res$position), , drop = FALSE]
@@ -323,6 +348,7 @@ get_results_raw <- function(gp_name, session_name, year) {
   if (identical(api_name, "Race")) {
     laps <- fetch_api("/laps", list(session_key = s_key))
     if (!is.null(laps) && nrow(laps) > 0 && "lap_duration" %in% names(laps)) {
+      laps$lap_duration <- suppressWarnings(as.numeric(as.character(laps$lap_duration)))
       laps <- laps[!is.na(laps$lap_duration), , drop = FALSE]
       if (nrow(laps) > 0) {
         fastest <- laps[which.min(laps$lap_duration), , drop = FALSE]
@@ -333,8 +359,13 @@ get_results_raw <- function(gp_name, session_name, year) {
 
     if (is.na(maz_val)) {
       if ("dnf" %in% names(full_res)) {
-        dnfs <- full_res[full_res$dnf %in% TRUE, , drop = FALSE]
+        dnf_flag <- full_res$dnf
+        if (is.character(dnf_flag)) {
+          dnf_flag <- tolower(dnf_flag) %in% c("true", "t", "1")
+        }
+        dnfs <- full_res[dnf_flag %in% TRUE, , drop = FALSE]
         if (nrow(dnfs) > 0 && "number_of_laps" %in% names(dnfs)) {
+          dnfs$number_of_laps <- suppressWarnings(as.numeric(as.character(dnfs$number_of_laps)))
           dnfs <- dnfs[order(dnfs$number_of_laps), , drop = FALSE]
           maz_val <- dnfs$name_acronym[1]
         }
@@ -343,6 +374,11 @@ get_results_raw <- function(gp_name, session_name, year) {
         maz_val <- full_res$name_acronym[nrow(full_res)]
       }
     }
+  }
+
+  override_key <- paste(trimws(gp_name), trimws(session_name), sep = "|")
+  if (override_key %in% names(MAZEPIN_OVERRIDES)) {
+    maz_val <- MAZEPIN_OVERRIDES[[override_key]]
   }
 
   list(posiciones = top5_real, vuelta_rapida = vr_val, mazepin = maz_val)

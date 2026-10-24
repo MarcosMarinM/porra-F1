@@ -66,6 +66,7 @@ for (i in seq_len(nrow(targets))) {
   if (nrow(res) == 0) next
 
   full <- merge(res, d_map, by = "driver_number", all.x = TRUE, sort = FALSE)
+  full$position <- suppressWarnings(as.numeric(as.character(full$position)))
   full <- full[!is.na(full$position), , drop = FALSE]
   if (nrow(full) == 0) next
   full <- full[order(full$position), , drop = FALSE]
@@ -75,6 +76,7 @@ for (i in seq_len(nrow(targets))) {
 
   if (identical(as.character(targets$session_name[i]), "Race")) {
     if (!is.null(laps)) {
+      laps$lap_duration <- suppressWarnings(as.numeric(as.character(laps$lap_duration)))
       l <- laps[laps$session_key == sk & !is.na(laps$lap_duration), , drop = FALSE]
       if (nrow(l) > 0) {
         fastest <- l[which.min(l$lap_duration), , drop = FALSE]
@@ -83,13 +85,23 @@ for (i in seq_len(nrow(targets))) {
       }
     }
     if (is.na(maz_val) && "dnf" %in% names(full)) {
-      dnfs <- full[full$dnf %in% TRUE, , drop = FALSE]
+      dnf_flag <- full$dnf
+      if (is.character(dnf_flag)) {
+        dnf_flag <- tolower(dnf_flag) %in% c("true", "t", "1")
+      }
+      dnfs <- full[dnf_flag %in% TRUE, , drop = FALSE]
       if (nrow(dnfs) > 0 && "number_of_laps" %in% names(dnfs)) {
+        dnfs$number_of_laps <- suppressWarnings(as.numeric(as.character(dnfs$number_of_laps)))
         dnfs <- dnfs[order(dnfs$number_of_laps), , drop = FALSE]
         maz_val <- dnfs$name_acronym[1]
       }
     }
     if (is.na(maz_val)) maz_val <- full$name_acronym[nrow(full)]
+  }
+
+  override_key <- paste(trimws(gp), trimws(sesion), sep = "|")
+  if (override_key %in% names(MAZEPIN_OVERRIDES)) {
+    maz_val <- MAZEPIN_OVERRIDES[[override_key]]
   }
 
   cache_results$set(
