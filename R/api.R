@@ -61,7 +61,7 @@ fetch_api <- function(endpoint, params = list(), timeout = 10) {
   tryCatch(
     {
       req <- request(url) |>
-        req_url_query(!!!params) |>
+        req_url_query(!!!params, .multi = "explode") |>
         req_timeout(timeout) |>
         req_retry(
           max_tries = 3,
@@ -300,14 +300,6 @@ get_results_raw <- function(gp_name, session_name, year) {
         vr_driver <- d_map$name_acronym[d_map$driver_number == fastest$driver_number]
         if (length(vr_driver) > 0) vr_val <- vr_driver[1]
       }
-    }
-
-    rc <- fetch_api("/race_control", list(session_key = s_key, category = "Retirement"))
-    if (!is.null(rc) && nrow(rc) > 0 && "date" %in% names(rc)) {
-      rc <- rc[order(rc$date), , drop = FALSE]
-      first_out <- rc[1, , drop = FALSE]
-      maz_driver <- d_map$name_acronym[d_map$driver_number == first_out$driver_number]
-      if (length(maz_driver) > 0) maz_val <- maz_driver[1]
     }
 
     if (is.na(maz_val)) {
