@@ -17,6 +17,11 @@
 compute_ranking <- function(sc) {
   if (is.null(sc) || nrow(sc) == 0) return(NULL)
 
+  if ("con_resultado" %in% names(sc)) {
+    sc <- sc[sc$con_resultado %in% TRUE, , drop = FALSE]
+    if (nrow(sc) == 0) return(NULL)
+  }
+
   for (col in c("pts_p1", "pts_p2", "pts_p3", "pts_p4", "pts_p5", "pts_vr", "pts_maz")) {
     if (!col %in% names(sc)) sc[[col]] <- 0
   }
@@ -126,4 +131,49 @@ calcular_score_reglamento <- function(porra, resultado) {
   }
   puntos$total <- sum(unlist(puntos))
   return(puntos)
+}
+
+compute_scores <- function(db, year, progress = FALSE) {
+  if (is.null(db) || nrow(db) == 0) return(NULL)
+
+  unique_events <- unique(db[, c("gp", "sesion")])
+  final_data <- list()
+
+  run <- function() {
+    for (i in seq_len(nrow(unique_events))) {
+      g <- unique_events$gp[i]
+      s <- unique_events$sesion[i]
+      if (isTRUE(progress)) incProgress(1 / nrow(unique_events), detail = g)
+
+      bets <- db %>% filter(gp == g, sesion == s)
+      ended <- session_ended(g, s, year)
+      real_res <- if (isFALSE(ended)) NULL else get_results(g, s, year)
+
+      if (!is.null(real_res)) {
+        for (j in seq_len(nrow(bets))) {
+          pts <- calcular_score_reglamento(bets[j, ], real_res)
+          pts_df <- as.data.frame(pts)
+          names(pts_df) <- paste0("pts_", names(pts_df))
+          row <- bind_cols(bets[j, , drop = FALSE], pts_df)
+          row$con_resultado <- TRUE
+          final_data[[length(final_data) + 1]] <<- row
+        }
+      } else {
+        for (col in c("pts_total", "pts_p1", "pts_p2", "pts_p3", "pts_p4", "pts_p5", "pts_vr", "pts_maz")) {
+          if (!col %in% names(bets)) bets[[col]] <- 0
+        }
+        bets$pts_total <- 0
+        bets$con_resultado <- FALSE
+        final_data[[length(final_data) + 1]] <<- bets
+      }
+    }
+  }
+
+  if (isTRUE(progress)) {
+    withProgress(message = tr("calculating", DEFAULT_LANG), run())
+  } else {
+    run()
+  }
+
+  if (length(final_data) > 0) bind_rows(final_data) else NULL
 }

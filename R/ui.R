@@ -2,6 +2,149 @@
 # INTERFAZ (UI)
 # ==============================================================================
 
+remember_me_js <- function() {
+  script <- r"---(
+document.addEventListener('DOMContentLoaded', function() {
+  var COOKIE_NAME = 'f1porra_token';
+  var COOKIE_DAYS = __COOKIE_DAYS__;
+  var LS_REMEMBER = 'f1porra_remember';
+  var SS_LOGIN = 'f1porra_login';
+  var SS_GUEST = 'f1porra_guest';
+
+  function lsGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { window.localStorage.setItem(k, v); } catch (e) {} }
+  function ssGet(k) { try { return window.sessionStorage.getItem(k); } catch (e) { return null; } }
+  function ssSet(k, v) { try { window.sessionStorage.setItem(k, v); } catch (e) {} }
+  function ssRemove(k) { try { window.sessionStorage.removeItem(k); } catch (e) {} }
+
+  function setCookie(name, value, days) {
+    try {
+      var parts = [name + '=' + encodeURIComponent(value), 'path=/'];
+      if (days && days > 0) {
+        var d = new Date();
+        d.setTime(d.getTime() + days * 86400000);
+        parts.push('expires=' + d.toUTCString());
+      }
+      parts.push(location.protocol === 'https:' ? 'SameSite=None; Secure' : 'SameSite=Lax');
+      document.cookie = parts.join('; ');
+    } catch (e) {}
+  }
+
+  function getCookie(name) {
+    try {
+      var m = document.cookie.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]*)'));
+      return m ? decodeURIComponent(m[1]) : null;
+    } catch (e) { return null; }
+  }
+
+  function deleteCookie(name) {
+    try {
+      document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax';
+    } catch (e) {}
+  }
+
+  function urlToken() {
+    var m = location.search.match(/[?&]token=([^&]+)/);
+    if (!m) return null;
+    var t = m[1];
+    try { t = decodeURIComponent(t); } catch (e) {}
+    return t.replace(/^"|"$/g, '');
+  }
+
+  function cleanUrl() {
+    try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
+  }
+
+  function sendToken(token) {
+    var tries = 0;
+    var timer = setInterval(function() {
+      if (++tries > 100) { clearInterval(timer); return; }
+      if (!window.Shiny || typeof Shiny.setInputValue !== 'function') return;
+      try {
+        Shiny.setInputValue('f1porra_token', token, {priority: 'event'});
+        clearInterval(timer);
+      } catch (e) {}
+    }, 100);
+  }
+
+  var loginForm = document.getElementById('auth-user_id');
+  var token = urlToken();
+
+  if (loginForm) {
+    if (!token && getCookie(COOKIE_NAME)) deleteCookie(COOKIE_NAME);
+    if (token) deleteCookie(COOKIE_NAME);
+  }
+
+  if (!loginForm && token) {
+    var isGuest = ssGet(SS_GUEST) === '1';
+    var isLogin = ssGet(SS_LOGIN) === '1';
+    var remember = lsGet(LS_REMEMBER) === '1';
+    var storedToken = getCookie(COOKIE_NAME);
+    var sameAsStored = !!storedToken && storedToken === token;
+
+    if (isGuest) {
+      deleteCookie(COOKIE_NAME);
+      ssRemove(SS_GUEST);
+      ssRemove(SS_LOGIN);
+    } else {
+      if (isLogin || sameAsStored) {
+        setCookie(COOKIE_NAME, token, remember ? COOKIE_DAYS : 0);
+        ssRemove(SS_LOGIN);
+        cleanUrl();
+      }
+      sendToken(token);
+    }
+  } else if (!loginForm) {
+    var savedCookie = getCookie(COOKIE_NAME);
+    if (savedCookie) sendToken(savedCookie);
+  }
+
+  var waitForForm = setInterval(function() {
+    var btn = document.getElementById('auth-go_auth');
+    if (!btn) return;
+    clearInterval(waitForForm);
+
+    var remember = lsGet(LS_REMEMBER) !== '0';
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = 'margin:10px 0;text-align:left;';
+    wrapper.innerHTML =
+      '<label style="cursor:pointer;font-weight:normal;">' +
+      '<input type="checkbox" id="remember_me" style="margin-right:6px;"' +
+      (remember ? ' checked' : '') + '>' +
+      'Recordarme</label>';
+    btn.parentNode.insertBefore(wrapper, btn);
+
+    btn.addEventListener('click', function() {
+      var cb = document.getElementById('remember_me');
+      lsSet(LS_REMEMBER, (cb && cb.checked) ? '1' : '0');
+      ssSet(SS_LOGIN, '1');
+      ssRemove(SS_GUEST);
+    });
+
+    var guestBtn = document.createElement('button');
+    guestBtn.type = 'button';
+    guestBtn.className = 'btn btn-default';
+    guestBtn.style.cssText = 'width:100%;margin-top:8px;color:#888;border-color:#555;';
+    guestBtn.innerHTML = '\uD83D\uDC41 Acceder como invitado';
+    guestBtn.addEventListener('click', function() {
+      ssSet(SS_GUEST, '1');
+      ssRemove(SS_LOGIN);
+      deleteCookie(COOKIE_NAME);
+
+      var userInput = document.getElementById('auth-user_id');
+      var pwdInput = document.getElementById('auth-user_pwd');
+      if (userInput) { userInput.value = 'guest'; userInput.dispatchEvent(new Event('change')); }
+      if (pwdInput) { pwdInput.value = 'guest'; pwdInput.dispatchEvent(new Event('change')); }
+      setTimeout(function() { btn.click(); }, 100);
+    });
+    btn.parentNode.insertBefore(guestBtn, btn.nextSibling);
+  }, 200);
+});
+)---"
+  script <- gsub("__COOKIE_DAYS__", REMEMBER_DAYS, script, fixed = TRUE)
+  tags$script(HTML(script))
+}
+
 build_lang_switcher <- function() {
   if (!MULTILANG) return(NULL)
   lang_codes <- names(LANG_CONFIG$languages)
@@ -27,6 +170,8 @@ ui <- fluidPage(
     heading_font = font_google("Titillium Web")
   ),
   tags$head(
+    tags$meta(name = "viewport", content = "width=device-width, initial-scale=1"),
+    remember_me_js(),
     tags$style(HTML("
       body { background-color: #000000; }
       .card { background-color: #1e1e1e; border: 1px solid #333; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }

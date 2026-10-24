@@ -6,26 +6,73 @@
 DB_PATH <- Sys.getenv("F1_DB_PATH")
 if (DB_PATH == "") DB_PATH <- "usuarios.sqlite"
 
+if (!file.exists(DB_PATH)) {
+  stop(
+    "ERROR: No existe la base de datos de usuarios (", DB_PATH, "). ",
+    "Créala con shinymanager::create_db()."
+  )
+}
+
 SHEET_ID <- Sys.getenv("F1_SHEET_ID")
 if (SHEET_ID == "") stop("ERROR: Falta configurar F1_SHEET_ID en el archivo .Renviron")
 
 json_path <- Sys.getenv("F1_JSON_PATH")
 if (json_path == "") json_path <- "f1-service-account.json"
 
+CURRENT_YEAR <- suppressWarnings(as.integer(Sys.getenv("F1_YEAR", unset = "2026")))
+if (is.na(CURRENT_YEAR)) CURRENT_YEAR <- 2026L
+
+REMEMBER_DAYS <- suppressWarnings(as.integer(Sys.getenv("F1_REMEMBER_DAYS", unset = "90")))
+if (is.na(REMEMBER_DAYS) || REMEMBER_DAYS < 1) REMEMBER_DAYS <- 90L
+
 # --- B. GOOGLE SHEETS & AUTENTICACIÓN ---
-if (file.exists(json_path) && json_path != "") {
-  gs4_auth(path = json_path)
-} else {
-  if (interactive()) options(gargle_oauth_email = TRUE)
+if (file.exists(json_path) && nzchar(json_path)) {
+  tryCatch(
+    gs4_auth(path = json_path),
+    error = function(e) {
+      warning("No se pudo autenticar con Google Sheets: ", conditionMessage(e), call. = FALSE)
+    }
+  )
+} else if (interactive()) {
+  options(gargle_oauth_email = TRUE)
 }
 
 # --- C. API ---
 BASE_URL <- "https://api.openf1.org/v1"
-CURRENT_YEAR <- 2026
+OPENF1_USERNAME <- Sys.getenv("OPENF1_USERNAME")
+OPENF1_PASSWORD <- Sys.getenv("OPENF1_PASSWORD")
+OPENF1_TOKEN <- Sys.getenv("OPENF1_TOKEN")
+.OPENF1_AUTH <- new.env(parent = emptyenv())
 
-cache_memoria <- cachem::cache_mem(max_age = 3600)
+# --- D. CACHÉS ---
+cache_api <- cachem::cache_mem(max_age = 3600)
+cache_season <- cachem::cache_mem(max_age = 1800)
+cache_current <- cachem::cache_mem(max_age = 900)
+cache_results <- cachem::cache_mem(max_age = 21600)
+cache_drivers <- cachem::cache_mem(max_age = 21600)
+cache_fail <- cachem::cache_mem(max_age = 60)
 
-# --- D. TRADUCCIONES ---
+# Cachés globales de la aplicación (compartidas entre sesiones)
+.SCORES_CACHE <- new.env(parent = emptyenv())
+.SHEET_CACHE <- new.env(parent = emptyenv())
+
+invalidate_sheet_cache <- function() {
+  .SHEET_CACHE$entry <- NULL
+  invisible(TRUE)
+}
+
+invalidate_scores_cache <- function() {
+  .SCORES_CACHE$entry <- NULL
+  invisible(TRUE)
+}
+
+`%||%` <- function(x, y) {
+  if (is.null(x) || length(x) == 0) return(y)
+  if (length(x) == 1 && is.na(x)) return(y)
+  x
+}
+
+# --- E. TRADUCCIONES ---
 
 DEFAULT_STRINGS <- list(
   panel_title = "Panel de control", code_label = "Código:", data_source = "Datos oficiales de OpenF1.",
@@ -100,7 +147,8 @@ DEFAULT_STRINGS <- list(
   tab_history = "\U0001f4cb Historial",
   history_title = "Historial de predicciones",
   no_history_data = "Selecciona un GP y una sesión para ver las predicciones.",
-  screenshot_btn = "Capturar"
+  screenshot_btn = "Capturar",
+  sheets_error = "No se pudo leer la hoja de Google. Reintentando..."
 )
 
 # Cargar traducciones si existe el fichero
@@ -109,15 +157,22 @@ LANG_CONFIG <- NULL
 MULTILANG <- FALSE
 
 if (file.exists("translations.json")) {
-  raw <- jsonlite::fromJSON("translations.json")
-  if (!is.null(raw[["_config"]])) {
-    LANG_CONFIG <- raw[["_config"]]
-    raw[["_config"]] <- NULL
-  }
-  TRANSLATIONS <- raw
-  if (!is.null(LANG_CONFIG) && length(LANG_CONFIG$languages) > 1) {
-    MULTILANG <- TRUE
-  }
+  tryCatch(
+    {
+      raw <- jsonlite::fromJSON("translations.json")
+      if (!is.null(raw[["_config"]])) {
+        LANG_CONFIG <- raw[["_config"]]
+        raw[["_config"]] <- NULL
+      }
+      TRANSLATIONS <- raw
+      if (!is.null(LANG_CONFIG) && length(LANG_CONFIG$languages) > 1) {
+        MULTILANG <- TRUE
+      }
+    },
+    error = function(e) {
+      warning("No se pudo leer translations.json: ", conditionMessage(e), call. = FALSE)
+    }
+  )
 }
 
 DEFAULT_LANG <- if (!is.null(LANG_CONFIG)) LANG_CONFIG[["default"]] else "es"
@@ -145,7 +200,7 @@ session_display <- function(lang) {
   stats::setNames(SESSION_VALUES, labels)
 }
 
-# --- E. COLORES POR EQUIPO (parrilla 2026) ---
+# --- F. COLORES POR EQUIPO (parrilla 2026) ---
 TEAM_COLOURS_2026 <- list(
   NOR = "#F47600", PIA = "#F47600",
   ANT = "#00D7B6", RUS = "#00D7B6",

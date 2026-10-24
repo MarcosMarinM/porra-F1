@@ -4,6 +4,9 @@
 .Ruserdata
 **/.DS_Store
 usuarios.sqlite
+usuarios.sqlite-journal
+usuarios.sqlite-wal
+usuarios.sqlite-shm
 service-account.json
 .httr-oauth
 f1-service-account.json
@@ -12,3 +15,4 @@ translations.json
 # Variables de Entorno
 .Renviron
 .positai
+.commandcode/

@@ -14,16 +14,54 @@ server <- function(input, output, session) {
   }
   res_auth <- secure_server(
     check_credentials = guest_check,
-    keep_token = TRUE
+    keep_token = TRUE,
+    timeout = REMEMBER_DAYS * 24 * 60
   )
 
-  is_guest <- reactive({ tolower(res_auth$user) == "guest" })
+  is_guest <- reactive({
+    user <- res_auth$user
+    !is.null(user) && length(user) == 1 && tolower(user) == "guest"
+  })
+
+  saved_token <- reactiveVal(NULL)
+  logging_out <- reactiveVal(FALSE)
+
+  observe({
+    if (isTRUE(logging_out())) return()
+    user <- res_auth$user
+    if (is.null(user) || length(user) != 1 || !nzchar(user) || tolower(user) == "guest") return()
+
+    token <- input$f1porra_token
+    if (is.null(token) || !nzchar(token)) {
+      token <- tryCatch(shinymanager:::getToken(session), error = function(e) NULL)
+    }
+    if (is.null(token) || !nzchar(token)) return()
+    if (identical(saved_token(), token)) return()
+
+    if (save_remember_token(token, user, isTRUE(as.logical(res_auth$user_info$admin)))) {
+      saved_token(token)
+    }
+  })
+
+  observeEvent(
+    input[[".shinymanager_logout"]],
+    {
+      logging_out(TRUE)
+      token <- tryCatch(shinymanager:::getToken(session), error = function(e) NULL)
+      if (is.null(token)) token <- saved_token()
+      delete_remember_token(token)
+    },
+    priority = 10,
+    ignoreInit = TRUE
+  )
   lang <- reactiveVal(DEFAULT_LANG)
   t <- function(key) tr(key, lang())
 
   # Helper: badge coloreado con el color del equipo (via CSS dinámico)
   team_badge <- function(driver, extra_class = "") {
-    if (is.na(driver) || driver == "") return(span(class = "driver-badge", "-"))
+    if (is.null(driver) || length(driver) == 0) return(span(class = "driver-badge", "-"))
+    driver <- driver[1]
+    if (is.na(driver) || !nzchar(driver)) return(span(class = "driver-badge", "-"))
     driver_class <- paste0("tc-", driver)
     span(class = trimws(paste("driver-badge", driver_class, extra_class)), driver)
   }
@@ -276,10 +314,33 @@ server <- function(input, output, session) {
   })
 
   # --- ENVIAR PORRA ---
+  read_sheet_cached <- function(force = FALSE, ttl = 60) {
+    now <- Sys.time()
+    entry <- .SHEET_CACHE$entry
+    if (!force && !is.null(entry) && difftime(now, entry$time, units = "secs") < ttl) {
+      return(entry$data)
+    }
+
+    data <- tryCatch(
+      read_sheet(SHEET_ID, col_types = "c"),
+      error = function(e) {
+        showNotification(
+          paste0(t("sheets_error"), " (", conditionMessage(e), ")"),
+          type = "error",
+          duration = 10
+        )
+        if (!is.null(entry)) entry$data else NULL
+      }
+    )
+
+    .SHEET_CACHE$entry <- list(data = data, time = now)
+    data
+  }
+
   get_db <- reactive({
     input$submit
     req(res_auth$user)
-    read_sheet(SHEET_ID, col_types = "c")
+    read_sheet_cached()
   })
 
   observeEvent(input$submit, {
@@ -292,13 +353,14 @@ server <- function(input, output, session) {
     }
 
     # Regla de similitud 75%
-    db_check <- read_sheet(SHEET_ID, col_types = "c")
-    otras <- db_check %>%
+    db_current <- read_sheet_cached(force = TRUE)
+    req(db_current)
+    otras <- db_current %>%
       filter(gp == input$gp, sesion == input$sesion, usuario != res_auth$user)
     if (nrow(otras) > 0) {
       es_carrera <- input$sesion == "Carrera"
       max_coincidencias <- if (es_carrera) 5 else 3
-      for (k in 1:nrow(otras)) {
+      for (k in seq_len(nrow(otras))) {
         coincidencias <- sum(c(
           top5[1] != "" && !is.na(otras$p1[k]) && top5[1] == otras$p1[k],
           top5[2] != "" && !is.na(otras$p2[k]) && top5[2] == otras$p2[k],
@@ -332,44 +394,59 @@ server <- function(input, output, session) {
       mazepin = if (input$sesion == "Carrera") input$maz else NA,
       timestamp = as.character(Sys.time())
     )
-    db <- read_sheet(SHEET_ID, col_types = "c")
-    existing <- which(db$usuario == res_auth$user & db$gp == input$gp & db$sesion == input$sesion)
-    if (length(existing) > 0) {
-      range_write(SHEET_ID, new_row, range = paste0("A", existing[1] + 1), col_names = FALSE)
-      showNotification(t("notify_updated"), type = "message")
-    } else {
-      sheet_append(SHEET_ID, new_row)
-      showNotification(t("notify_submitted"), type = "message")
+
+    existing <- which(
+      db_current$usuario == res_auth$user &
+        db_current$gp == input$gp &
+        db_current$sesion == input$sesion
+    )
+
+    written <- tryCatch(
+      {
+        if (length(existing) > 0) {
+          range_write(
+            SHEET_ID, new_row,
+            range = paste0("A", existing[1] + 1),
+            col_names = FALSE
+          )
+        } else {
+          sheet_append(SHEET_ID, new_row)
+        }
+        TRUE
+      },
+      error = function(e) {
+        showNotification(
+          paste0("No se pudo guardar la porra: ", conditionMessage(e)),
+          type = "error", duration = 10
+        )
+        FALSE
+      }
+    )
+
+    if (isTRUE(written)) {
+      invalidate_sheet_cache()
+      invalidate_scores_cache()
+      showNotification(
+        if (length(existing) > 0) t("notify_updated") else t("notify_submitted"),
+        type = "message"
+      )
     }
   })
 
   # --- CÁLCULO DE PUNTOS ---
   scores <- reactive({
     db <- get_db()
-    if (nrow(db) == 0) return(NULL)
-    unique_events <- unique(db[, c("gp", "sesion")])
-    final_data <- list()
-    withProgress(message = t("calculating"), {
-      for (i in 1:nrow(unique_events)) {
-        g <- unique_events$gp[i]
-        s <- unique_events$sesion[i]
-        incProgress(1 / nrow(unique_events), detail = g)
-        real_res <- get_results(g, s, CURRENT_YEAR)
-        bets <- db %>% filter(gp == g, sesion == s)
-        if (!is.null(real_res)) {
-          for (j in 1:nrow(bets)) {
-            pts <- calcular_score_reglamento(bets[j, ], real_res)
-            pts_df <- as.data.frame(pts)
-            names(pts_df) <- paste0("pts_", names(pts_df))
-            final_data[[length(final_data) + 1]] <- bind_cols(bets[j, ], pts_df)
-          }
-        } else {
-          bets$pts_total <- 0
-          final_data[[length(final_data) + 1]] <- bets
-        }
-      }
-    })
-    if (length(final_data) > 0) bind_rows(final_data) else NULL
+    if (is.null(db) || nrow(db) == 0) return(NULL)
+
+    now <- Sys.time()
+    entry <- .SCORES_CACHE$entry
+    if (!is.null(entry) && difftime(now, entry$time, units = "secs") < 300) {
+      return(entry$data)
+    }
+
+    result <- compute_scores(db, CURRENT_YEAR, progress = TRUE)
+    .SCORES_CACHE$entry <- list(data = result, time = now)
+    result
   })
 
   # --- LEADERBOARD ---
@@ -380,7 +457,12 @@ server <- function(input, output, session) {
 
   output$leaderboard_ui <- renderUI({
     ranking <- ranking_data()
-    if (is.null(ranking)) return(NULL)
+    if (is.null(ranking)) {
+      return(div(
+        style = "text-align:center; padding: 40px; color: #666;",
+        icon("clock", "fa-2x"), br(), br(), t("waiting_results")
+      ))
+    }
     tags$table(
       class = "table table-striped table-hover", style = "margin-bottom:0;",
       tags$thead(tags$tr(tags$th(t("col_rank")), tags$th(t("col_pilot")), tags$th(t("col_pts")))),
@@ -405,8 +487,13 @@ server <- function(input, output, session) {
   }
 
   output$gp_breakdown_ui <- renderUI({
-    req(input$gp_stats, scores(), input$view_scope)
-    user_data <- scores() %>% filter(gp == input$gp_stats)
+    req(input$gp_stats, input$view_scope, res_auth$user)
+    sc <- scores()
+    if (is.null(sc)) {
+      return(div(style = "text-align:center; padding: 40px; color: #666;",
+        icon("wind", "fa-3x"), br(), t("no_data")))
+    }
+    user_data <- sc %>% filter(gp == input$gp_stats)
     if (input$view_scope == "me") {
       user_data <- user_data %>% filter(usuario == res_auth$user)
     } else {
@@ -467,7 +554,6 @@ server <- function(input, output, session) {
     )
   })
 
-  `%||%` <- function(x, y) if (is.null(x) || is.na(x)) y else x
 
   # ===========================================================================
   # EVOLUCIÓN DEL CAMPEONATO
@@ -476,7 +562,12 @@ server <- function(input, output, session) {
     req(scores())
     cal <- get_calendar(CURRENT_YEAR)
 
-    sc <- scores() |>
+    sc_data <- scores()
+    if ("con_resultado" %in% names(sc_data)) {
+      sc_data <- sc_data |> filter(con_resultado %in% TRUE)
+    }
+
+    sc <- sc_data |>
       group_by(usuario, gp) |>
       summarise(pts = sum(pts_total, na.rm = TRUE), .groups = "drop")
 
@@ -525,18 +616,24 @@ server <- function(input, output, session) {
   # PREMIOS DIVERTIDOS
   # ===========================================================================
   output$awards_ui <- renderUI({
-    req(scores(), ranking_data())
+    req(scores())
     sc <- scores()
-    champ <- ranking_data() |> select(usuario, Rank)
 
     for (col in c("pts_p1", "pts_p2", "pts_p3", "pts_p4", "pts_p5", "pts_vr", "pts_maz")) {
       if (!col %in% names(sc)) sc[[col]] <- 0
     }
     sc <- sc |> mutate(across(starts_with("pts_"), ~replace_na(., 0)))
 
+    if ("con_resultado" %in% names(sc)) {
+      sc <- sc |> filter(con_resultado %in% TRUE)
+    }
+
     if (nrow(sc) == 0) {
       return(div(style = "text-align:center; padding:40px; color:#666;", t("no_awards_data")))
     }
+
+    req(ranking_data())
+    champ <- ranking_data() |> select(usuario, Rank)
 
     # Helper: desempate por posición en el campeonato
     # negative = TRUE para premios "negativos" (el peor clasificado "gana")
@@ -610,6 +707,7 @@ server <- function(input, output, session) {
 
     # 6. Piloto del pueblo (no es por usuario — sin desempate)
     db <- get_db()
+    if (is.null(db) || nrow(db) == 0) db <- data.frame(p1 = character(), p2 = character(), p3 = character(), p4 = character(), p5 = character())
     long <- db |>
       select(p1, p2, p3, p4, p5) |>
       pivot_longer(everything(), values_to = "driver") |>
@@ -828,6 +926,10 @@ server <- function(input, output, session) {
     }
 
     db <- get_db()
+    if (is.null(db) || nrow(db) == 0) {
+      return(div(style = "text-align:center; padding: 40px; color: #666;",
+        icon("wind", "fa-3x"), br(), br(), t("no_data")))
+    }
     data <- db |> filter(gp == input$history_gp, sesion == input$history_session)
 
     if (nrow(data) == 0) {

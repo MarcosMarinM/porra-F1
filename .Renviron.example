@@ -1,3 +1,11 @@
 F1_SHEET_ID="PON_AQUI_EL_ID_DEL_GOOGLE_SHEETS"
 F1_DB_PATH="usuarios.sqlite"
 F1_JSON_PATH="f1-service-account.json"
+F1_YEAR="2026"
+F1_REMEMBER_DAYS="90"
+
+# OpenF1: necesario para acceder durante sesiones en directo (401 sin credenciales)
+# Usa usuario/contraseña o un token ya emitido, no ambos.
+OPENF1_USERNAME=""
+OPENF1_PASSWORD=""
+OPENF1_TOKEN=""
