@@ -50,10 +50,22 @@ dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
 
 cache_api <- cachem::cache_mem(max_age = 3600)
 cache_season <- cachem::cache_disk(file.path(cache_dir, "season"), max_age = 1800)
+cache_season_stale <- cachem::cache_disk(file.path(cache_dir, "season_stale"), max_age = Inf)
 cache_current <- cachem::cache_mem(max_age = 900)
 cache_results <- cachem::cache_disk(file.path(cache_dir, "results"), max_age = 2592000)
 cache_drivers <- cachem::cache_disk(file.path(cache_dir, "drivers"), max_age = 21600)
 cache_fail <- cachem::cache_mem(max_age = 60)
+
+FALLBACK_CALENDAR_2026 <- c(
+  "Australian Grand Prix", "Chinese Grand Prix", "Japanese Grand Prix",
+  "Bahrain Grand Prix", "Saudi Arabian Grand Prix", "Miami Grand Prix",
+  "Canadian Grand Prix", "Monaco Grand Prix", "Barcelona Grand Prix",
+  "Austrian Grand Prix", "British Grand Prix", "Belgian Grand Prix",
+  "Hungarian Grand Prix", "Dutch Grand Prix", "Italian Grand Prix",
+  "Spanish Grand Prix", "Azerbaijan Grand Prix", "Singapore Grand Prix",
+  "United States Grand Prix", "Mexico City Grand Prix", "São Paulo Grand Prix",
+  "Las Vegas Grand Prix", "Qatar Grand Prix", "Abu Dhabi Grand Prix"
+)
 
 # Cachés globales de la aplicación (compartidas entre sesiones)
 .SCORES_CACHE <- new.env(parent = emptyenv())
@@ -217,3 +229,5 @@ TEAM_COLOURS_2026 <- list(
   GAS = "#00A1E8", COL = "#00A1E8",
   PER = "#909090", BOT = "#909090"
 )
+
+FALLBACK_DRIVERS_2026 <- names(TEAM_COLOURS_2026)

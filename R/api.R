@@ -149,7 +149,22 @@ get_season_raw <- function(year) {
 }
 
 get_season <- function(year) {
-  cached_call(cache_season, cache_key("season", year), get_season_raw(year))
+  key <- cache_key("season", year)
+  fresh <- cache_season$get(key, missing = NULL)
+  if (!is.null(fresh)) return(fresh)
+
+  stale <- cache_season_stale$get(key, missing = NULL)
+  fail_key <- paste0("fail", key)
+  if (!is.null(cache_fail$get(fail_key, missing = NULL))) return(stale)
+
+  value <- get_season_raw(year)
+  if (is.null(value)) {
+    cache_fail$set(fail_key, TRUE)
+    return(stale)
+  }
+  cache_season$set(key, value)
+  cache_season_stale$set(key, value)
+  value
 }
 
 get_calendar_raw <- function(year) {
@@ -166,7 +181,11 @@ get_calendar_raw <- function(year) {
 }
 
 get_calendar <- function(year) {
-  cached_call(cache_api, cache_key("calendar", year), get_calendar_raw(year))
+  value <- cached_call(cache_api, cache_key("calendar", year), get_calendar_raw(year))
+  if (is.null(value) && identical(as.integer(year), 2026L)) {
+    return(FALLBACK_CALENDAR_2026)
+  }
+  value
 }
 
 get_current_gp_raw <- function(year) {
@@ -193,7 +212,13 @@ get_current_gp <- function(year) {
 recent_session_keys <- function(year, n = 3) {
   season <- get_season(year)
   if (is.null(season) || nrow(season) == 0) return(NULL)
-  keys <- unique(season$session_key)
+
+  past <- season[
+    !is.na(season$date_end_utc) & season$date_end_utc <= Sys.time(),
+    , drop = FALSE
+  ]
+  use <- if (nrow(past) > 0) past else season
+  keys <- unique(use$session_key)
   if (length(keys) == 0) return(NULL)
   utils::tail(keys, n)
 }
@@ -213,7 +238,11 @@ get_drivers_raw <- function(year) {
 }
 
 get_drivers <- function(year) {
-  cached_call(cache_drivers, cache_key("all_drivers", year), get_drivers_raw(year))
+  value <- cached_call(cache_drivers, cache_key("all_drivers", year), get_drivers_raw(year))
+  if (is.null(value) && identical(as.integer(year), 2026L)) {
+    return(sort(FALLBACK_DRIVERS_2026))
+  }
+  value
 }
 
 get_driver_colours_raw <- function(year) {

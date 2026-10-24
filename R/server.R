@@ -290,6 +290,7 @@ server <- function(input, output, session) {
   # --- CARGA INICIAL Y RECARGA AL CAMBIAR IDIOMA ---
   observe({
     req(res_auth$user)
+    req(input$main_tabset)
     lang()
 
     cal <- get_calendar(CURRENT_YEAR)
