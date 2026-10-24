@@ -45,11 +45,14 @@ OPENF1_TOKEN <- Sys.getenv("OPENF1_TOKEN")
 .OPENF1_AUTH <- new.env(parent = emptyenv())
 
 # --- D. CACHÉS ---
+cache_dir <- file.path("cache", "openf1")
+dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
+
 cache_api <- cachem::cache_mem(max_age = 3600)
-cache_season <- cachem::cache_mem(max_age = 1800)
+cache_season <- cachem::cache_disk(file.path(cache_dir, "season"), max_age = 1800)
 cache_current <- cachem::cache_mem(max_age = 900)
-cache_results <- cachem::cache_mem(max_age = 21600)
-cache_drivers <- cachem::cache_mem(max_age = 21600)
+cache_results <- cachem::cache_disk(file.path(cache_dir, "results"), max_age = 2592000)
+cache_drivers <- cachem::cache_disk(file.path(cache_dir, "drivers"), max_age = 21600)
 cache_fail <- cachem::cache_mem(max_age = 60)
 
 # Cachés globales de la aplicación (compartidas entre sesiones)
