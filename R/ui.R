@@ -51,10 +51,6 @@ document.addEventListener('DOMContentLoaded', function() {
     return t.replace(/^"|"$/g, '');
   }
 
-  function cleanUrl() {
-    try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
-  }
-
   function sendToken(token) {
     var tries = 0;
     var timer = setInterval(function() {
@@ -90,7 +86,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (isLogin || sameAsStored) {
         setCookie(COOKIE_NAME, token, remember ? COOKIE_DAYS : 0);
         ssRemove(SS_LOGIN);
-        cleanUrl();
       }
       sendToken(token);
     }

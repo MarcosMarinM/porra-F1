@@ -26,16 +26,42 @@ server <- function(input, output, session) {
   saved_token <- reactiveVal(NULL)
   logging_out <- reactiveVal(FALSE)
 
+  current_token <- function() {
+    token <- input$f1porra_token
+    if (is.null(token) || !nzchar(token)) {
+      token <- tryCatch(auth_cookie_token(session$request), error = function(e) NULL)
+    }
+    if (is.null(token) || !nzchar(token)) {
+      token <- tryCatch(shinymanager:::getToken(session), error = function(e) NULL)
+    }
+    if (is.null(token) || !nzchar(token)) NULL else token
+  }
+
+  observe({
+    if (!is.null(res_auth$user)) return()
+    token <- current_token()
+    if (is.null(token)) return()
+
+    info <- tryCatch(shinymanager:::.tok$get(token), error = function(e) NULL)
+    if (is.null(info) || is.null(info$user)) {
+      info <- lookup_remember_token(token)
+    }
+    if (is.null(info) || is.null(info$user) || !nzchar(info$user)) return()
+
+    res_auth$user <- info$user
+    res_auth$user_info <- list(
+      user = info$user,
+      admin = isTRUE(as.logical(info$admin))
+    )
+  })
+
   observe({
     if (isTRUE(logging_out())) return()
     user <- res_auth$user
     if (is.null(user) || length(user) != 1 || !nzchar(user) || tolower(user) == "guest") return()
 
-    token <- input$f1porra_token
-    if (is.null(token) || !nzchar(token)) {
-      token <- tryCatch(shinymanager:::getToken(session), error = function(e) NULL)
-    }
-    if (is.null(token) || !nzchar(token)) return()
+    token <- current_token()
+    if (is.null(token)) return()
     if (identical(saved_token(), token)) return()
 
     if (save_remember_token(token, user, isTRUE(as.logical(res_auth$user_info$admin)))) {
@@ -47,7 +73,7 @@ server <- function(input, output, session) {
     input[[".shinymanager_logout"]],
     {
       logging_out(TRUE)
-      token <- tryCatch(shinymanager:::getToken(session), error = function(e) NULL)
+      token <- current_token()
       if (is.null(token)) token <- saved_token()
       delete_remember_token(token)
     },
@@ -345,6 +371,10 @@ server <- function(input, output, session) {
       }
     )
 
+    if (!is.null(data) && ncol(data) > 0 && !"usuario" %in% names(data)) {
+      names(data)[1] <- "usuario"
+    }
+
     .SHEET_CACHE$entry <- list(data = data, time = now)
     data
   }
@@ -358,6 +388,16 @@ server <- function(input, output, session) {
   observeEvent(input$submit, {
     req(!is_guest())
     req(input$gp, input$sesion, input$p1)
+
+    user <- as.character(res_auth$user)
+    if (length(user) != 1 || is.na(user) || !nzchar(user)) {
+      showNotification(
+        "Sesión no válida. Recarga la página e inicia sesión.",
+        type = "error", duration = 8
+      )
+      return()
+    }
+
     top5 <- c(input$p1, input$p2, input$p3, input$p4, input$p5)
     if (any(duplicated(top5[top5 != ""]))) {
       showNotification(t("err_duplicate"), type = "error")
@@ -368,7 +408,7 @@ server <- function(input, output, session) {
     db_current <- read_sheet_cached(force = TRUE)
     req(db_current)
     otras <- db_current %>%
-      filter(gp == input$gp, sesion == input$sesion, usuario != res_auth$user)
+      filter(gp == input$gp, sesion == input$sesion, usuario != user)
     if (nrow(otras) > 0) {
       es_carrera <- input$sesion == "Carrera"
       max_coincidencias <- if (es_carrera) 5 else 3
@@ -400,7 +440,7 @@ server <- function(input, output, session) {
     }
 
     new_row <- data.frame(
-      usuario = res_auth$user, gp = input$gp, sesion = input$sesion,
+      usuario = user, gp = input$gp, sesion = input$sesion,
       p1 = input$p1, p2 = input$p2, p3 = input$p3, p4 = input$p4, p5 = input$p5,
       vuelta_rapida = if (input$sesion == "Carrera") input$vr else NA,
       mazepin = if (input$sesion == "Carrera") input$maz else NA,
@@ -408,7 +448,7 @@ server <- function(input, output, session) {
     )
 
     existing <- which(
-      db_current$usuario == res_auth$user &
+      db_current$usuario == user &
         db_current$gp == input$gp &
         db_current$sesion == input$sesion
     )
